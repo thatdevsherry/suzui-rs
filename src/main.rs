@@ -2,7 +2,8 @@ use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Margin, Rect},
-    text::Text,
+    style::{Color, Style},
+    text::{Span, Text},
     widgets::{Block, Borders, Gauge, Paragraph},
     DefaultTerminal, Frame,
 };
@@ -22,7 +23,7 @@ fn main() -> color_eyre::Result<()> {
 pub struct App {
     /// Is the application running?
     running: bool,
-    sdl_viewer: SuzukiSdlViewer,
+    //sdl_viewer: SuzukiSdlViewer,
 }
 
 impl App {
@@ -114,12 +115,10 @@ impl App {
                 Constraint::Ratio(1, 3),
             ])
             .split(left[0].inner(Margin::new(1, 0)));
-        let rpm_layout = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![Constraint::Ratio(3, 4), Constraint::Ratio(1, 4)])
-            .split(engine_speed_layout[1]);
-        frame.render_widget(Paragraph::new("Gauge here"), rpm_layout[0]);
-        frame.render_widget(Paragraph::new("12850 RPM"), rpm_layout[1]);
+        let rpm_gauge = Gauge::default()
+            .percent(((3250 as f64 / 6500 as f64) * 100.0).min(100.0) as u16)
+            .label(format!("{} RPM", 3250));
+        frame.render_widget(rpm_gauge, engine_speed_layout[1]);
         let rpm_misc_layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
@@ -137,12 +136,11 @@ impl App {
                 Constraint::Ratio(1, 4),
             ])
             .split(right[0].inner(Margin::new(1, 0)));
-        let throttle_gauge_row = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![Constraint::Ratio(3, 4), Constraint::Ratio(1, 4)])
-            .split(throttle_block_layout[1]);
-        frame.render_widget(Paragraph::new("Gauge here"), throttle_gauge_row[0]);
-        frame.render_widget(Paragraph::new("100 %"), throttle_gauge_row[1]);
+        let throttle_value = ((128 as f64 / 255 as f64) * 100.0).round();
+        let throttle_gauge = Gauge::default()
+            .percent(throttle_value as u16)
+            .label(format!("{} %", throttle_value));
+        frame.render_widget(throttle_gauge, throttle_block_layout[1]);
         frame.render_widget(
             Paragraph::new("TPS Voltage: 5.00 V"),
             throttle_block_layout[2],
@@ -189,22 +187,75 @@ impl App {
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Length(1),
-                Constraint::Ratio(1, 2),
-                Constraint::Ratio(1, 2),
+                Constraint::Ratio(1, 3),
+                Constraint::Ratio(1, 3),
             ])
             .split(left[2].inner(Margin::new(1, 0)));
         let coolant_temp_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)])
+            .direction(Direction::Horizontal)
+            .constraints(vec![Constraint::Ratio(1, 4), Constraint::Ratio(3, 4)])
             .split(temperature_layout[1]);
         let intake_temp_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)])
+            .direction(Direction::Horizontal)
+            .constraints(vec![Constraint::Ratio(1, 4), Constraint::Ratio(3, 4)])
             .split(temperature_layout[2]);
-        frame.render_widget(Paragraph::new("Coolant: 120°C"), coolant_temp_layout[0]);
-        frame.render_widget(Paragraph::new("Gauge here"), coolant_temp_layout[1]);
-        frame.render_widget(Paragraph::new("Intake: 120°C"), intake_temp_layout[0]);
-        frame.render_widget(Paragraph::new("Gauge here"), intake_temp_layout[1]);
+        frame.render_widget(Paragraph::new("Coolant:"), coolant_temp_layout[0]);
+        let coolant_min = 70;
+        let coolant_max = 110;
+        let coolant_current = 108;
+        let coolant_percentage = if coolant_current <= coolant_min {
+            0
+        } else if coolant_current >= coolant_max {
+            100
+        } else {
+            ((coolant_current - coolant_min) as f64 / (coolant_max - coolant_min) as f64 * 100.0)
+                as u16
+        };
+        let coolant_color = if coolant_current >= 105 {
+            Color::Red
+        } else if coolant_current >= 98 {
+            Color::Yellow
+        } else if coolant_current >= 88 {
+            Color::Green
+        } else {
+            Color::Blue
+        };
+        let coolant_gauge = Gauge::default()
+            .percent(coolant_percentage)
+            .gauge_style(Style::default().fg(coolant_color))
+            .label(Span::styled(
+                format!("{} C", coolant_current),
+                Style::default().fg(Color::White).bg(Color::Black),
+            ));
+        frame.render_widget(coolant_gauge, coolant_temp_layout[1]);
+        frame.render_widget(Paragraph::new("Intake:"), intake_temp_layout[0]);
+        let intake_min = -40;
+        let intake_max = 70;
+        let intake_current = 50;
+        let intake_percentage = if intake_current <= intake_min {
+            0
+        } else if intake_current >= intake_max {
+            100
+        } else {
+            ((intake_current - intake_min) as f64 / (intake_max - intake_min) as f64 * 100.0) as u16
+        };
+        let intake_color = if intake_current >= 60 {
+            Color::Red
+        } else if intake_current >= 45 {
+            Color::Yellow
+        } else if intake_current >= 0 {
+            Color::Green
+        } else {
+            Color::Cyan
+        };
+        let intake_gauge = Gauge::default()
+            .percent(intake_percentage)
+            .gauge_style(Style::default().fg(intake_color))
+            .label(Span::styled(
+                format!("{} C", intake_current),
+                Style::default().fg(Color::White).bg(Color::Black),
+            ));
+        frame.render_widget(intake_gauge, intake_temp_layout[1]);
 
         // Electrical block
         let electrical_layout = Layout::default()
