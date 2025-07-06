@@ -50,7 +50,6 @@ impl App {
     /// - <https://docs.rs/ratatui/latest/ratatui/widgets/index.html>
     /// - <https://github.com/ratatui/ratatui/tree/main/ratatui-widgets/examples>
     fn render(&mut self, frame: &mut Frame) {
-        // Initial layout
         let layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![Constraint::Ratio(4, 5), Constraint::Ratio(1, 5)])
@@ -104,8 +103,6 @@ impl App {
             Block::new().borders(Borders::ALL).title("Electrical"),
             right[2],
         );
-
-        // Engine speed block
         let engine_speed_layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
@@ -113,136 +110,12 @@ impl App {
                 Constraint::Ratio(2, 3),
                 Constraint::Ratio(1, 3),
             ])
-            .split(left[0].inner(Margin::new(1, 0)));
-        let rpm_layout = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![Constraint::Ratio(3, 4), Constraint::Ratio(1, 4)])
-            .split(engine_speed_layout[1]);
-        frame.render_widget(Paragraph::new("Gauge here"), rpm_layout[0]);
-        frame.render_widget(Paragraph::new("12850 RPM"), rpm_layout[1]);
-        let rpm_misc_layout = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(engine_speed_layout[2]);
-        frame.render_widget(Paragraph::new("Target: 0000"), rpm_misc_layout[0]);
-        frame.render_widget(Paragraph::new("ISC: 000 %"), rpm_misc_layout[1]);
-
-        // Throttle block
-        let throttle_block_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![
-                Constraint::Length(1),
-                Constraint::Ratio(2, 4),
-                Constraint::Ratio(1, 4),
-                Constraint::Ratio(1, 4),
-            ])
-            .split(right[0].inner(Margin::new(1, 0)));
-        let throttle_gauge_row = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![Constraint::Ratio(3, 4), Constraint::Ratio(1, 4)])
-            .split(throttle_block_layout[1]);
-        frame.render_widget(Paragraph::new("Gauge here"), throttle_gauge_row[0]);
-        frame.render_widget(Paragraph::new("100 %"), throttle_gauge_row[1]);
+            .split(left[0].inner(Margin::new(1,0)));
+        //let engine_speed_layout_padded_body = engine_speed_layout[1].inner(Margin::new(1, 0));
         frame.render_widget(
-            Paragraph::new("TPS Voltage: 5.00 V"),
-            throttle_block_layout[2],
+            Paragraph::new("Gauge here."),
+            engine_speed_layout[0],
         );
-        frame.render_widget(Paragraph::new("CTP: OFF"), throttle_block_layout[3]);
-
-        // Fuel/Ignition block
-        let fuel_ignition_block_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![
-                Constraint::Length(1),
-                Constraint::Ratio(1, 3),
-                Constraint::Ratio(1, 3),
-                Constraint::Ratio(1, 3),
-            ])
-            .split(left[1].inner(Margin::new(1, 0)));
-        frame.render_widget(
-            Paragraph::new("INJ PW: 131.07 ms"),
-            fuel_ignition_block_layout[1],
-        );
-        frame.render_widget(
-            Paragraph::new("Fuel Cut: OFF"),
-            fuel_ignition_block_layout[2],
-        );
-        frame.render_widget(
-            Paragraph::new("IGN ADV: -12"),
-            fuel_ignition_block_layout[3],
-        );
-
-        // Airflow block
-        let airflow_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![
-                Constraint::Length(1),
-                Constraint::Ratio(1, 2),
-                Constraint::Ratio(1, 2),
-            ])
-            .split(right[1].inner(Margin::new(1, 0)));
-        frame.render_widget(Paragraph::new("MAP: 146.63 kPa"), airflow_layout[1]);
-        frame.render_widget(Paragraph::new("Baro: 146.63 kPa"), airflow_layout[2]);
-
-        // Temperature block
-        let temperature_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![
-                Constraint::Length(1),
-                Constraint::Ratio(1, 2),
-                Constraint::Ratio(1, 2),
-            ])
-            .split(left[2].inner(Margin::new(1, 0)));
-        let coolant_temp_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)])
-            .split(temperature_layout[1]);
-        let intake_temp_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)])
-            .split(temperature_layout[2]);
-        frame.render_widget(Paragraph::new("Coolant: 120°C"), coolant_temp_layout[0]);
-        frame.render_widget(Paragraph::new("Gauge here"), coolant_temp_layout[1]);
-        frame.render_widget(Paragraph::new("Intake: 120°C"), intake_temp_layout[0]);
-        frame.render_widget(Paragraph::new("Gauge here"), intake_temp_layout[1]);
-
-        // Electrical block
-        let electrical_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Length(1), Constraint::Length(1)])
-            .split(right[2].inner(Margin::new(1, 0)));
-        frame.render_widget(
-            Paragraph::new("battery voltage: 20.0 V"),
-            electrical_layout[1],
-        );
-
-        // Status block
-        let status_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![
-                Constraint::Length(1), // header
-                Constraint::Length(1), // speed
-                Constraint::Length(1), // flags
-            ])
-            .split(layout[1].inner(Margin::new(1, 0)));
-        frame.render_widget(Paragraph::new("Speed: 255 km/h"), status_layout[1]);
-        let flags_layout = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![
-                Constraint::Ratio(1, 4), // EL
-                Constraint::Ratio(1, 4), // AC
-                Constraint::Ratio(1, 4), // PSP
-                Constraint::Ratio(1, 4), // RAD
-            ])
-            .split(status_layout[2]);
-        // EL
-        frame.render_widget(Paragraph::new("EL: OFF"), flags_layout[0]);
-        // AC
-        frame.render_widget(Paragraph::new("AC: OFF"), flags_layout[1]);
-        // PSP
-        frame.render_widget(Paragraph::new("PSP: OFF"), flags_layout[2]);
-        // FAN
-        frame.render_widget(Paragraph::new("FAN: OFF"), flags_layout[3]);
 
         // raw data display
         /*
