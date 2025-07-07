@@ -62,19 +62,19 @@ impl App {
         let left = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
-                Constraint::Ratio(1, 4),
-                Constraint::Ratio(1, 4),
-                Constraint::Ratio(1, 4),
-                Constraint::Ratio(1, 4),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
             ])
             .split(layout[0]);
         let right = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
-                Constraint::Ratio(1, 4),
-                Constraint::Ratio(1, 4),
-                Constraint::Ratio(1, 4),
-                Constraint::Ratio(1, 4),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
             ])
             .split(layout[1]);
         frame.render_widget(
@@ -112,8 +112,8 @@ impl App {
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Length(1),
-                Constraint::Percentage(50),
-                Constraint::Percentage(50),
+                Constraint::Min(5),
+                Constraint::Max(3),
                 Constraint::Length(1),
             ])
             .split(left[0].inner(Margin::new(1, 0)));
@@ -167,9 +167,9 @@ impl App {
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Length(1),
-                Constraint::Ratio(2, 4),
-                Constraint::Ratio(1, 4),
-                Constraint::Ratio(1, 4),
+                Constraint::Max(3),
+                Constraint::Length(1),
+                Constraint::Length(1),
                 Constraint::Length(1),
             ])
             .split(right[0].inner(Margin::new(1, 0)));
@@ -209,9 +209,9 @@ impl App {
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Length(1),
-                Constraint::Ratio(1, 3),
-                Constraint::Ratio(1, 3),
-                Constraint::Ratio(1, 3),
+                Constraint::Max(3),
+                Constraint::Length(1),
+                Constraint::Length(1),
                 Constraint::Length(1),
             ])
             .split(left[1].inner(Margin::new(1, 0)));
@@ -256,8 +256,8 @@ impl App {
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Length(1),
-                Constraint::Ratio(1, 2),
-                Constraint::Ratio(1, 2),
+                Constraint::Length(1),
+                Constraint::Length(1),
                 Constraint::Length(1),
             ])
             .split(right[1].inner(Margin::new(1, 0)));
@@ -285,8 +285,8 @@ impl App {
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Length(1),
-                Constraint::Ratio(1, 3),
-                Constraint::Ratio(1, 3),
+                Constraint::Max(3),
+                Constraint::Max(3),
                 Constraint::Length(1),
             ])
             .split(left[2].inner(Margin::new(1, 0)));
@@ -382,7 +382,7 @@ impl App {
         // Speed block
         let speed_block = Layout::default()
             .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Length(1), Constraint::Ratio(1, 3)])
+            .constraints(vec![Constraint::Length(1), Constraint::Max(3)])
             .split(left[3].inner(Margin::new(1, 0)));
         let speed = self
             .sdl_viewer
@@ -398,11 +398,11 @@ impl App {
         let flags_layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
-                Constraint::Length(1),   // EL
-                Constraint::Ratio(1, 4), // EL
-                Constraint::Ratio(1, 4), // AC
-                Constraint::Ratio(1, 4), // PSP
-                Constraint::Ratio(1, 4), // RAD
+                Constraint::Length(1),
+                Constraint::Length(1), // EL
+                Constraint::Length(1), // AC
+                Constraint::Length(1), // PSP
+                Constraint::Length(1), // RAD
                 Constraint::Length(1),
             ])
             .split(right[3].inner(Margin::new(1, 0)));

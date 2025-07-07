@@ -147,17 +147,19 @@ impl TryFrom<&[u8]> for SdlMessage {
 
 #[derive(Debug)]
 pub struct SuzukiSdlViewer {
-    port: TTYPort,
+    //port: TTYPort,
     pub raw_data: HashMap<ObdAddress, u8>,
     pub scan_tool_data: HashMap<ScanToolParameter, ScanToolParameterValue>,
 }
 
 impl Default for SuzukiSdlViewer {
     fn default() -> Self {
+        /*
         let vag_kkl = serialport::new("/dev/ttyUSB0", 7812)
             .timeout(Duration::from_secs(1))
             .open_native()
             .expect("Failed to open port");
+        */
         let mut scan_tool_data: HashMap<ScanToolParameter, ScanToolParameterValue> = HashMap::new();
         let mut raw_data: HashMap<ObdAddress, u8> = HashMap::new();
 
@@ -174,7 +176,7 @@ impl Default for SuzukiSdlViewer {
             );
         }
         Self {
-            port: vag_kkl,
+            //port: vag_kkl,
             scan_tool_data,
             raw_data,
         }
@@ -184,6 +186,7 @@ impl Default for SuzukiSdlViewer {
 impl SuzukiSdlViewer {
     /// Query ECU ID.
     fn get_ecu_id(&mut self) -> String {
+        /*
         let header = SdlHeader::EcuId;
         let data = None;
         let sdl_message = SdlMessage::new(header, data);
@@ -195,6 +198,7 @@ impl SuzukiSdlViewer {
         println!("read echo: {:?} bytes", bytes_read_echo);
         let bytes_read = self.port.read(response_buf.as_mut_slice());
         println!("read response: {:?} bytes", bytes_read);
+        */
         "FFFF".to_string()
     }
 
@@ -204,6 +208,7 @@ impl SuzukiSdlViewer {
             *v = v.wrapping_add(1);
         }
         return;
+        /*
         let header = SdlHeader::EcuData;
         let data = Some(ObdAddress::iter().map(|v| v as u8).collect());
         let sdl_message = SdlMessage::new(header, data);
@@ -228,6 +233,7 @@ impl SuzukiSdlViewer {
                 }
             }
         }
+        */
     }
 
     /// Update scan tool data from raw values.
