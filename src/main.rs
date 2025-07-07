@@ -1,5 +1,7 @@
+use std::{thread::sleep, time::Duration};
+
 use color_eyre::Result;
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use crossterm::event::{self, poll, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Margin, Rect},
     style::{Color, Style},
@@ -23,7 +25,7 @@ fn main() -> color_eyre::Result<()> {
 pub struct App {
     /// Is the application running?
     running: bool,
-    //sdl_viewer: SuzukiSdlViewer,
+    sdl_viewer: SuzukiSdlViewer,
 }
 
 impl App {
@@ -37,7 +39,8 @@ impl App {
         self.running = true;
         //self.sdl_viewer.connect();
         while self.running {
-            //self.sdl_viewer.update_raw_data();
+            self.sdl_viewer.update_raw_data();
+            self.sdl_viewer.update_processed_data();
             terminal.draw(|frame| self.render(frame))?;
             self.handle_crossterm_events()?;
         }
@@ -53,34 +56,27 @@ impl App {
     fn render(&mut self, frame: &mut Frame) {
         // Initial layout
         let layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Ratio(4, 5), Constraint::Ratio(1, 5)])
-            .split(frame.area());
-        let top = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(layout[0]);
+            .split(frame.area());
         let left = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
-                Constraint::Ratio(1, 3),
-                Constraint::Ratio(1, 3),
-                Constraint::Ratio(1, 3),
+                Constraint::Ratio(1, 4),
+                Constraint::Ratio(1, 4),
+                Constraint::Ratio(1, 4),
+                Constraint::Ratio(1, 4),
             ])
-            .split(top[0]);
+            .split(layout[0]);
         let right = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
-                Constraint::Ratio(1, 3),
-                Constraint::Ratio(1, 3),
-                Constraint::Ratio(1, 3),
+                Constraint::Ratio(1, 4),
+                Constraint::Ratio(1, 4),
+                Constraint::Ratio(1, 4),
+                Constraint::Ratio(1, 4),
             ])
-            .split(top[1]);
-        frame.render_widget(Block::new().borders(Borders::ALL), layout[0]);
-        frame.render_widget(
-            Block::new().borders(Borders::ALL).title("Status"),
-            layout[1],
-        );
+            .split(layout[1]);
         frame.render_widget(
             Block::new().borders(Borders::ALL).title("Engine speed"),
             left[0],
@@ -105,26 +101,66 @@ impl App {
             Block::new().borders(Borders::ALL).title("Electrical"),
             right[2],
         );
+        frame.render_widget(Block::new().borders(Borders::ALL).title("Vehicle"), left[3]);
+        frame.render_widget(
+            Block::new().borders(Borders::ALL).title("Status Flags"),
+            right[3],
+        );
 
         // Engine speed block
         let engine_speed_layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Length(1),
-                Constraint::Ratio(2, 3),
-                Constraint::Ratio(1, 3),
+                Constraint::Percentage(50),
+                Constraint::Percentage(50),
+                Constraint::Length(1),
             ])
             .split(left[0].inner(Margin::new(1, 0)));
+        let engine_rpm_current = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::EngineSpeed)
+            .unwrap();
+        let desired_idle = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::DesiredIdle)
+            .unwrap();
+        let isc_flow_duty = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::IacFlowDutyCycle)
+            .unwrap();
+        let engine_rpm_percentage =
+            ((engine_rpm_current.value as f64 / 6500 as f64) * 100.0).min(100.0) as u16;
+        let engine_rpm_color = match engine_rpm_current.value {
+            rpm if rpm < 500.0 => Color::Red,
+            rpm if rpm < 2500.0 => Color::White,
+            rpm if rpm < 4500.0 => Color::Green,
+            rpm if rpm < 6500.0 => Color::Yellow,
+            _ => Color::Red,
+        };
         let rpm_gauge = Gauge::default()
-            .percent(((3250 as f64 / 6500 as f64) * 100.0).min(100.0) as u16)
-            .label(format!("{} RPM", 3250));
+            .percent(engine_rpm_percentage)
+            .gauge_style(Style::default().fg(engine_rpm_color))
+            .label(Span::styled(
+                format!("{} RPM", engine_rpm_current.value),
+                Style::default().fg(Color::White).bg(Color::Black),
+            ));
         frame.render_widget(rpm_gauge, engine_speed_layout[1]);
         let rpm_misc_layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
             .split(engine_speed_layout[2]);
-        frame.render_widget(Paragraph::new("Target: 0000"), rpm_misc_layout[0]);
-        frame.render_widget(Paragraph::new("ISC: 000 %"), rpm_misc_layout[1]);
+        frame.render_widget(
+            Paragraph::new(format!("Target: {} RPM", desired_idle.value)),
+            rpm_misc_layout[0],
+        );
+        let isc_gauge = Gauge::default()
+            .percent(isc_flow_duty.value as u16)
+            .label(format!("{} %", isc_flow_duty.value));
+        frame.render_widget(isc_gauge, rpm_misc_layout[1]);
 
         // Throttle block
         let throttle_block_layout = Layout::default()
@@ -134,18 +170,39 @@ impl App {
                 Constraint::Ratio(2, 4),
                 Constraint::Ratio(1, 4),
                 Constraint::Ratio(1, 4),
+                Constraint::Length(1),
             ])
             .split(right[0].inner(Margin::new(1, 0)));
-        let throttle_value = ((128 as f64 / 255 as f64) * 100.0).round();
+        let throttle_value = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::AbsoluteThrottlePosition)
+            .unwrap();
+        let tps_voltage = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::TpSensorVolt)
+            .unwrap();
+        let ctp = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::ClosedThrottlePos)
+            .unwrap();
         let throttle_gauge = Gauge::default()
-            .percent(throttle_value as u16)
-            .label(format!("{} %", throttle_value));
+            .percent(throttle_value.value as u16)
+            .label(format!("{} %", throttle_value.value));
         frame.render_widget(throttle_gauge, throttle_block_layout[1]);
         frame.render_widget(
-            Paragraph::new("TPS Voltage: 5.00 V"),
+            Paragraph::new(format!("TPS Voltage: {:.2} V", tps_voltage.value)),
             throttle_block_layout[2],
         );
-        frame.render_widget(Paragraph::new("CTP: OFF"), throttle_block_layout[3]);
+        frame.render_widget(
+            Paragraph::new(format!(
+                "CTP: {}",
+                if ctp.value == 0.0 { "OFF" } else { "ON" }
+            )),
+            throttle_block_layout[3],
+        );
 
         // Fuel/Ignition block
         let fuel_ignition_block_layout = Layout::default()
@@ -155,18 +212,42 @@ impl App {
                 Constraint::Ratio(1, 3),
                 Constraint::Ratio(1, 3),
                 Constraint::Ratio(1, 3),
+                Constraint::Length(1),
             ])
             .split(left[1].inner(Margin::new(1, 0)));
+        let inj_pw_current = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::InjPulseWidthCyl1)
+            .unwrap();
+        let fuel_cut = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::FuelCut)
+            .unwrap();
+        let ignition_advance = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::IgnitionAdvance)
+            .unwrap();
+        let inj_pw_percentage = ((inj_pw_current.value / 50.0 as f32) * 100.0).min(100.0) as u16;
+        let inj_pw_gauge = Gauge::default()
+            .percent(inj_pw_percentage)
+            //.gauge_style(Style::default().fg(engine_rpm_color))
+            .label(Span::styled(
+                format!("{:.1} ms", inj_pw_current.value),
+                Style::default().fg(Color::White).bg(Color::Black),
+            ));
+        frame.render_widget(inj_pw_gauge, fuel_ignition_block_layout[1]);
         frame.render_widget(
-            Paragraph::new("INJ PW: 131.07 ms"),
-            fuel_ignition_block_layout[1],
-        );
-        frame.render_widget(
-            Paragraph::new("Fuel Cut: OFF"),
+            Paragraph::new(format!(
+                "Fuel Cut: {}",
+                if fuel_cut.value == 0.0 { "OFF" } else { "ON" }
+            )),
             fuel_ignition_block_layout[2],
         );
         frame.render_widget(
-            Paragraph::new("IGN ADV: -12"),
+            Paragraph::new(format!("IGN ADV: {}", ignition_advance.value)),
             fuel_ignition_block_layout[3],
         );
 
@@ -177,10 +258,27 @@ impl App {
                 Constraint::Length(1),
                 Constraint::Ratio(1, 2),
                 Constraint::Ratio(1, 2),
+                Constraint::Length(1),
             ])
             .split(right[1].inner(Margin::new(1, 0)));
-        frame.render_widget(Paragraph::new("MAP: 146.63 kPa"), airflow_layout[1]);
-        frame.render_widget(Paragraph::new("Baro: 146.63 kPa"), airflow_layout[2]);
+        let map = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::Map)
+            .unwrap();
+        let baro = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::BarometricPressure)
+            .unwrap();
+        frame.render_widget(
+            Paragraph::new(format!("MAP: {:.2} kPa", map.value)),
+            airflow_layout[1],
+        );
+        frame.render_widget(
+            Paragraph::new(format!("Baro: {:.2} kPa", baro.value)),
+            airflow_layout[2],
+        );
 
         // Temperature block
         let temperature_layout = Layout::default()
@@ -189,6 +287,7 @@ impl App {
                 Constraint::Length(1),
                 Constraint::Ratio(1, 3),
                 Constraint::Ratio(1, 3),
+                Constraint::Length(1),
             ])
             .split(left[2].inner(Margin::new(1, 0)));
         let coolant_temp_layout = Layout::default()
@@ -200,38 +299,46 @@ impl App {
             .constraints(vec![Constraint::Ratio(1, 4), Constraint::Ratio(3, 4)])
             .split(temperature_layout[2]);
         frame.render_widget(Paragraph::new("Coolant:"), coolant_temp_layout[0]);
-        let coolant_min = 70;
-        let coolant_max = 110;
-        let coolant_current = 108;
+        let coolant = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::CoolantTemp)
+            .unwrap();
+        let coolant_min = 60.0;
+        let coolant_max = 120.0;
+        let coolant_current = coolant.value;
         let coolant_percentage = if coolant_current <= coolant_min {
             0
         } else if coolant_current >= coolant_max {
             100
         } else {
-            ((coolant_current - coolant_min) as f64 / (coolant_max - coolant_min) as f64 * 100.0)
+            ((coolant_current - coolant_min) as f32 / (coolant_max - coolant_min) as f32 * 100.0)
                 as u16
         };
-        let coolant_color = if coolant_current >= 105 {
-            Color::Red
-        } else if coolant_current >= 98 {
-            Color::Yellow
-        } else if coolant_current >= 88 {
-            Color::Green
-        } else {
-            Color::Blue
+        let coolant_color = match coolant_current {
+            temp if temp < 65.0 => Color::Blue,
+            temp if temp < 87.0 => Color::Cyan,
+            temp if temp < 93.0 => Color::Green,
+            temp if temp < 100.0 => Color::Yellow,
+            _ => Color::Red,
         };
         let coolant_gauge = Gauge::default()
             .percent(coolant_percentage)
             .gauge_style(Style::default().fg(coolant_color))
             .label(Span::styled(
-                format!("{} C", coolant_current),
+                format!("{} °C", coolant_current),
                 Style::default().fg(Color::White).bg(Color::Black),
             ));
         frame.render_widget(coolant_gauge, coolant_temp_layout[1]);
         frame.render_widget(Paragraph::new("Intake:"), intake_temp_layout[0]);
-        let intake_min = -40;
-        let intake_max = 70;
-        let intake_current = 50;
+        let intake_min = -40.0;
+        let intake_max = 70.0;
+        let intake = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::CoolantTemp)
+            .unwrap();
+        let intake_current = intake.value;
         let intake_percentage = if intake_current <= intake_min {
             0
         } else if intake_current >= intake_max {
@@ -239,11 +346,11 @@ impl App {
         } else {
             ((intake_current - intake_min) as f64 / (intake_max - intake_min) as f64 * 100.0) as u16
         };
-        let intake_color = if intake_current >= 60 {
+        let intake_color = if intake_current >= 60.0 {
             Color::Red
-        } else if intake_current >= 45 {
+        } else if intake_current >= 45.0 {
             Color::Yellow
-        } else if intake_current >= 0 {
+        } else if intake_current >= 0.0 {
             Color::Green
         } else {
             Color::Cyan
@@ -252,7 +359,7 @@ impl App {
             .percent(intake_percentage)
             .gauge_style(Style::default().fg(intake_color))
             .label(Span::styled(
-                format!("{} C", intake_current),
+                format!("{} °C", intake_current),
                 Style::default().fg(Color::White).bg(Color::Black),
             ));
         frame.render_widget(intake_gauge, intake_temp_layout[1]);
@@ -262,38 +369,95 @@ impl App {
             .direction(Direction::Vertical)
             .constraints(vec![Constraint::Length(1), Constraint::Length(1)])
             .split(right[2].inner(Margin::new(1, 0)));
+        let battery_voltage = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::BatteryVoltage)
+            .unwrap();
         frame.render_widget(
-            Paragraph::new("battery voltage: 20.0 V"),
+            Paragraph::new(format!("battery voltage: {:.1} V", battery_voltage.value)),
             electrical_layout[1],
         );
 
+        // Speed block
+        let speed_block = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Length(1), Constraint::Ratio(1, 3)])
+            .split(left[3].inner(Margin::new(1, 0)));
+        let speed = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::VehicleSpeed)
+            .unwrap();
+        let speed_gauge = Gauge::default()
+            .percent(((speed.value / 255.0) * 100.0) as u16)
+            .label(format!("{} km/h", speed.value));
+        frame.render_widget(speed_gauge, speed_block[1]);
+
         // Status block
-        let status_layout = Layout::default()
+        let flags_layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
-                Constraint::Length(1), // header
-                Constraint::Length(1), // speed
-                Constraint::Length(1), // flags
-            ])
-            .split(layout[1].inner(Margin::new(1, 0)));
-        frame.render_widget(Paragraph::new("Speed: 255 km/h"), status_layout[1]);
-        let flags_layout = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![
+                Constraint::Length(1),   // EL
                 Constraint::Ratio(1, 4), // EL
                 Constraint::Ratio(1, 4), // AC
                 Constraint::Ratio(1, 4), // PSP
                 Constraint::Ratio(1, 4), // RAD
+                Constraint::Length(1),
             ])
-            .split(status_layout[2]);
+            .split(right[3].inner(Margin::new(1, 0)));
         // EL
-        frame.render_widget(Paragraph::new("EL: OFF"), flags_layout[0]);
+        let el = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::ElectricLoad)
+            .unwrap();
+        frame.render_widget(
+            Paragraph::new(format!(
+                "EL: {}",
+                if el.value == 0.0 { "OFF" } else { "ON" }
+            )),
+            flags_layout[1],
+        );
         // AC
-        frame.render_widget(Paragraph::new("AC: OFF"), flags_layout[1]);
+        let ac = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::AcSwitch)
+            .unwrap();
+        frame.render_widget(
+            Paragraph::new(format!(
+                "AC: {}",
+                if ac.value == 0.0 { "OFF" } else { "ON" }
+            )),
+            flags_layout[2],
+        );
         // PSP
-        frame.render_widget(Paragraph::new("PSP: OFF"), flags_layout[2]);
+        let psp = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::PspSwitch)
+            .unwrap();
+        frame.render_widget(
+            Paragraph::new(format!(
+                "PSP: {}",
+                if psp.value == 0.0 { "OFF" } else { "ON" }
+            )),
+            flags_layout[3],
+        );
         // FAN
-        frame.render_widget(Paragraph::new("FAN: OFF"), flags_layout[3]);
+        let fan = self
+            .sdl_viewer
+            .scan_tool_data
+            .get(&ScanToolParameter::RadiatorFan)
+            .unwrap();
+        frame.render_widget(
+            Paragraph::new(format!(
+                "FAN: {}",
+                if fan.value == 0.0 { "OFF" } else { "ON" }
+            )),
+            flags_layout[4],
+        );
 
         // raw data display
         /*
@@ -331,12 +495,14 @@ impl App {
     /// If your application needs to perform work in between handling events, you can use the
     /// [`event::poll`] function to check if there are any events available with a timeout.
     fn handle_crossterm_events(&mut self) -> Result<()> {
-        match event::read()? {
-            // it's important to check KeyEventKind::Press to avoid handling key release events
-            Event::Key(key) if key.kind == KeyEventKind::Press => self.on_key_event(key),
-            Event::Mouse(_) => {}
-            Event::Resize(_, _) => {}
-            _ => {}
+        if poll(Duration::from_millis(100))? {
+            match event::read()? {
+                // it's important to check KeyEventKind::Press to avoid handling key release events
+                Event::Key(key) if key.kind == KeyEventKind::Press => self.on_key_event(key),
+                Event::Mouse(_) => {}
+                Event::Resize(_, _) => {}
+                _ => {}
+            }
         }
         Ok(())
     }

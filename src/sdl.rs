@@ -1,7 +1,9 @@
+use rand::{rngs, seq::IndexedRandom, thread_rng};
 use serialport::TTYPort;
 use std::{
     collections::HashMap,
     io::{Read, Write},
+    thread::sleep,
     time::Duration,
 };
 use strum::IntoEnumIterator;
@@ -9,7 +11,7 @@ use strum_macros::{Display, EnumIter, FromRepr};
 
 #[derive(Debug)]
 pub struct ScanToolParameterValue {
-    pub value: String,
+    pub value: f32,
     pub unit: Option<String>,
 }
 
@@ -166,8 +168,8 @@ impl Default for SuzukiSdlViewer {
             scan_tool_data.insert(
                 scan_tool_parameter,
                 ScanToolParameterValue {
+                    value: 0.0,
                     unit: None,
-                    value: "N/A".to_string(),
                 },
             );
         }
@@ -198,6 +200,10 @@ impl SuzukiSdlViewer {
 
     /// Query obd addresses and update raw data.
     pub fn update_raw_data(&mut self) {
+        for (k, v) in self.raw_data.iter_mut() {
+            *v = v.wrapping_add(1);
+        }
+        return;
         let header = SdlHeader::EcuData;
         let data = Some(ObdAddress::iter().map(|v| v as u8).collect());
         let sdl_message = SdlMessage::new(header, data);
@@ -209,8 +215,8 @@ impl SuzukiSdlViewer {
         println!("read echo: {:?} bytes", bytes_read_echo);
         let bytes_read = self.port.read(response_buf.as_mut_slice());
         println!("read response: {:?} bytes", bytes_read);
-
         let request = sdl_message;
+        println!("{:?}", response_buf);
         let response = SdlMessage::try_from(&response_buf[..]).unwrap();
 
         if let Some(addrs) = request.data {
@@ -234,7 +240,7 @@ impl SuzukiSdlViewer {
                     self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
-                            value: processed_value.round().to_string(),
+                            value: processed_value.round(),
                             unit: Some("RPM".to_string()),
                         },
                     );
@@ -242,11 +248,12 @@ impl SuzukiSdlViewer {
                 ScanToolParameter::EngineSpeed => {
                     let low_byte = self.raw_data.get(&ObdAddress::RpmLow).unwrap();
                     let high_byte = self.raw_data.get(&ObdAddress::RpmHigh).unwrap();
-                    let processed_value = ((high_byte << 8) | low_byte) as f32 / 5.1;
+                    let processed_value =
+                        (((*high_byte as u16) << 8) | *low_byte as u16) as f32 / 5.1;
                     self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
-                            value: processed_value.round().to_string(),
+                            value: processed_value.round(),
                             unit: Some("RPM".to_string()),
                         },
                     );
@@ -257,7 +264,7 @@ impl SuzukiSdlViewer {
                     self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
-                            value: processed_value.round().to_string(),
+                            value: processed_value.round(),
                             unit: Some("RPM".to_string()),
                         },
                     );
@@ -268,7 +275,7 @@ impl SuzukiSdlViewer {
                     self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
-                            value: processed_value.round().to_string(),
+                            value: processed_value,
                             unit: Some("V".to_string()),
                         },
                     );
@@ -279,7 +286,7 @@ impl SuzukiSdlViewer {
                     self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
-                            value: processed_value.round().to_string(),
+                            value: processed_value,
                             unit: Some("V".to_string()),
                         },
                     );
@@ -298,7 +305,7 @@ impl SuzukiSdlViewer {
                     self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
-                            value: processed_value.round().to_string(),
+                            value: processed_value.round(),
                             unit: Some("C".to_string()),
                         },
                     );
@@ -312,11 +319,12 @@ impl SuzukiSdlViewer {
                         .raw_data
                         .get(&ObdAddress::InjectorPulseWidthHigh)
                         .unwrap();
-                    let processed_value = ((high_byte << 8) | low_byte) as f32 * 0.002;
+                    let processed_value =
+                        (((*high_byte as u16) << 8) | *low_byte as u16) as f32 * 0.002;
                     self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
-                            value: format!("{:.2}", processed_value),
+                            value: processed_value,
                             unit: Some("ms".to_string()),
                         },
                     );
@@ -334,7 +342,7 @@ impl SuzukiSdlViewer {
                     self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
-                            value: format!("{:.1}", processed_value),
+                            value: processed_value,
                             unit: Some("kPa".to_string()),
                         },
                     );
@@ -345,7 +353,7 @@ impl SuzukiSdlViewer {
                     let abs_throttle_pos = self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
-                            value: processed_value.round().to_string(),
+                            value: processed_value.round(),
                             unit: Some("%".to_string()),
                         },
                     );
@@ -356,7 +364,7 @@ impl SuzukiSdlViewer {
                     self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
-                            value: processed_value.to_string(),
+                            value: processed_value.into(),
                             unit: Some("km/h".to_string()),
                         },
                     );
@@ -367,78 +375,62 @@ impl SuzukiSdlViewer {
                     self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
-                            value: processed_value.round().to_string(),
+                            value: processed_value.round(),
                             unit: Some("BTDC".to_string()),
                         },
                     );
                 }
                 ScanToolParameter::PspSwitch => {
                     let raw_value = self.raw_data.get(&ObdAddress::StatusFlags).unwrap();
-                    let processed_value = if raw_value & (1 << 1) != 0 {
-                        "ON"
-                    } else {
-                        "OFF"
-                    };
+                    let processed_value = if raw_value & (1 << 1) != 0 { 1 } else { 0 };
                     self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
-                            value: processed_value.to_string(),
+                            value: processed_value as f32,
                             unit: None,
                         },
                     );
                 }
                 ScanToolParameter::AcSwitch => {
                     let raw_value = self.raw_data.get(&ObdAddress::StatusFlags).unwrap();
-                    let processed_value = if raw_value & (1 << 2) != 0 {
-                        "ON"
-                    } else {
-                        "OFF"
-                    };
+                    let processed_value = if raw_value & (1 << 2) != 0 { 1 } else { 0 };
                     self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
-                            value: processed_value.to_string(),
+                            value: processed_value as f32,
                             unit: None,
                         },
                     );
                 }
                 ScanToolParameter::ClosedThrottlePos => {
                     let raw_value = self.raw_data.get(&ObdAddress::StatusFlags).unwrap();
-                    let processed_value = if raw_value & (1 << 4) != 0 {
-                        "ON"
-                    } else {
-                        "OFF"
-                    };
+                    let processed_value = if raw_value & (1 << 4) != 0 { 1 } else { 0 };
                     self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
-                            value: processed_value.to_string(),
+                            value: processed_value as f32,
                             unit: None,
                         },
                     );
                 }
                 ScanToolParameter::ElectricLoad => {
                     let raw_value = self.raw_data.get(&ObdAddress::StatusFlags).unwrap();
-                    let processed_value = if raw_value & (1 << 6) != 0 {
-                        "ON"
-                    } else {
-                        "OFF"
-                    };
+                    let processed_value = if raw_value & (1 << 6) != 0 { 1 } else { 0 };
                     self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
-                            value: processed_value.to_string(),
+                            value: processed_value as f32,
                             unit: None,
                         },
                     );
                 }
                 ScanToolParameter::RadiatorFan => {
                     let raw_value = self.raw_data.get(&ObdAddress::RadiatorFan).unwrap();
-                    let processed_value = if *raw_value == 128 { "ON" } else { "OFF" };
+                    let processed_value = if *raw_value == 128 { 1 } else { 0 };
                     self.scan_tool_data.insert(
                         ScanToolParameter::RadiatorFan,
                         ScanToolParameterValue {
-                            value: processed_value.to_string(),
+                            value: processed_value as f32,
                             unit: None,
                         },
                     );
@@ -453,14 +445,14 @@ impl SuzukiSdlViewer {
                         .get(&ObdAddress::InjectorPulseWidthHigh)
                         .unwrap();
                     let processed_value = if *low_byte == 0 && *high_byte == 0 {
-                        "ON"
+                        1
                     } else {
-                        "OFF"
+                        0
                     };
                     self.scan_tool_data.insert(
                         ScanToolParameter::FuelCut,
                         ScanToolParameterValue {
-                            value: processed_value.to_string(),
+                            value: processed_value as f32,
                             unit: None,
                         },
                     );
