@@ -13,5 +13,4 @@ color-eyre = "0.6.3"
 serialport = "4.7.2"
 strum = "0.27.1"
 strum_macros = "0.27.1"
-itertools = "0.14.0"
-rand = "0.9.1"
+clap = { version = "4.5.40", features = ["derive"] }

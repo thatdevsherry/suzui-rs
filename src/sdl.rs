@@ -1,9 +1,7 @@
-use rand::{rngs, seq::IndexedRandom, thread_rng};
 use serialport::TTYPort;
 use std::{
     collections::HashMap,
     io::{Read, Write},
-    thread::sleep,
     time::Duration,
 };
 use strum::IntoEnumIterator;
@@ -201,32 +199,23 @@ impl SuzukiSdlViewer {
     }
 
     /// Query obd addresses and update raw data.
-    pub fn update_raw_data(&mut self) {
-        /*
-        for (_, v) in self.raw_data.iter_mut() {
-            *v = v.wrapping_add(1);
+    pub fn update_raw_data(&mut self, should_simulate: bool) {
+        if should_simulate {
+            for (_, v) in self.raw_data.iter_mut() {
+                *v = v.wrapping_add(1);
+            }
+            return;
         }
-        */
         let header = SdlHeader::EcuData;
         let data = Some(ObdAddress::iter().map(|v| v as u8).collect());
-        //println!("hdr {:?}", header);
-        //println!("data {:?}", data);
         let sdl_message = SdlMessage::new(header, data);
-        //println!("sdl msg {:?}", sdl_message);
-        //println!("sdl msg as bytes: {:?}", sdl_message.to_bytes());
         let written = self.port.write(&sdl_message.to_bytes());
-        //println!("wrote {:?} bytes", written);
         let bytes_written = written.unwrap();
         let mut echo_buf: Vec<u8> = vec![0; bytes_written.into()];
         let mut response_buf: Vec<u8> = vec![0; bytes_written.into()];
-        //println!("response_buf: {:?}", echo_buf);
-        //println!("response_buf len: {:?}", echo_buf.len());
-        let bytes_read_echo = self.port.read_exact(&mut echo_buf); // echo
-                                                                   //println!("read echo: {:?} bytes", bytes_read_echo);
-        let bytes_read = self.port.read_exact(response_buf.as_mut_slice());
-        //println!("read response: {:?} bytes", bytes_read);
+        let _ = self.port.read_exact(&mut echo_buf); // echo
+        let _ = self.port.read_exact(response_buf.as_mut_slice());
         let request = sdl_message;
-        //println!("ecu response: {:?}", response_buf);
         let response = SdlMessage::try_from(&response_buf[..]).unwrap();
 
         if let Some(addrs) = request.data {
@@ -292,11 +281,11 @@ impl SuzukiSdlViewer {
                 }
                 ScanToolParameter::ThrottleAngle => {
                     let raw_value = self.raw_data.get(&ObdAddress::TpsAngle).unwrap();
-                    let processed_value = *raw_value as f32;
+                    let processed_value = ((*raw_value as f32 * 63.0) / 128.0) as u8;
                     self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
-                            value: processed_value,
+                            value: processed_value as f32,
                             unit: Some("°".to_string()),
                         },
                     );
@@ -485,6 +474,5 @@ impl SuzukiSdlViewer {
     /// Send ID request to ECU as a means of verifying connection.
     pub fn connect(&mut self) {
         let ecu_id = self.get_ecu_id();
-        //println!("ecu_id: {}", ecu_id);
     }
 }

@@ -1,4 +1,5 @@
-use std::{thread::sleep, time::Duration};
+use clap::Parser;
+use std::time::Duration;
 
 use color_eyre::Result;
 use crossterm::event::{self, poll, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
@@ -11,10 +12,18 @@ use ratatui::{
 };
 use suzui_rs::sdl::{ScanToolParameter, SuzukiSdlViewer};
 
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short, long, default_value_t = false)]
+    simulate: bool,
+}
+
 fn main() -> color_eyre::Result<()> {
+    let args = Args::parse();
     color_eyre::install()?;
     let terminal = ratatui::init();
-    let result = App::new().run(terminal);
+    let result = App::new().run(terminal, args.simulate);
     ratatui::restore();
     result
 }
@@ -34,11 +43,13 @@ impl App {
     }
 
     /// Run the application's main loop.
-    pub fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
+    pub fn run(mut self, mut terminal: DefaultTerminal, should_simulate: bool) -> Result<()> {
         self.running = true;
-        //self.sdl_viewer.connect();
+        if !should_simulate {
+            self.sdl_viewer.connect();
+        }
         while self.running {
-            self.sdl_viewer.update_raw_data();
+            self.sdl_viewer.update_raw_data(should_simulate);
             self.sdl_viewer.update_processed_data();
             terminal.draw(|frame| self.render(frame))?;
             self.handle_crossterm_events()?;
