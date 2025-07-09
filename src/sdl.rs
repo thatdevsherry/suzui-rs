@@ -97,7 +97,7 @@ impl SdlMessage {
 
     pub fn new(header: SdlHeader, data: Option<Vec<u8>>) -> Self {
         let data = data.unwrap_or_default();
-        let length = header as u8 + data.len() as u8 + 1;
+        let length = 1 + 1 + data.len() as u8 + 1;
         let checksum = Self::generate_checksum(&[&[header as u8, length], &data[..]].concat());
         Self {
             header,
@@ -128,7 +128,7 @@ impl TryFrom<&[u8]> for SdlMessage {
             return Err("length of bytes less than min. of 3".to_string());
         }
         let header = value[0];
-        let header_enum = SdlHeader::from_repr(header.into()).unwrap();
+        let header_enum = SdlHeader::from_repr(header.into()).expect(&format!("{:?}", header));
         let length = value[1];
         let data = &value[2..length as usize - 1];
         let d = if data.len() > 0 {
@@ -148,19 +148,17 @@ impl TryFrom<&[u8]> for SdlMessage {
 
 #[derive(Debug)]
 pub struct SuzukiSdlViewer {
-    //port: TTYPort,
+    port: TTYPort,
     pub raw_data: HashMap<ObdAddress, u8>,
     pub scan_tool_data: HashMap<ScanToolParameter, ScanToolParameterValue>,
 }
 
 impl Default for SuzukiSdlViewer {
     fn default() -> Self {
-        /*
         let vag_kkl = serialport::new("/dev/ttyUSB0", 7812)
             .timeout(Duration::from_secs(1))
             .open_native()
             .expect("Failed to open port");
-        */
         let mut scan_tool_data: HashMap<ScanToolParameter, ScanToolParameterValue> = HashMap::new();
         let mut raw_data: HashMap<ObdAddress, u8> = HashMap::new();
 
@@ -177,7 +175,7 @@ impl Default for SuzukiSdlViewer {
             );
         }
         Self {
-            //port: vag_kkl,
+            port: vag_kkl,
             scan_tool_data,
             raw_data,
         }
@@ -187,41 +185,48 @@ impl Default for SuzukiSdlViewer {
 impl SuzukiSdlViewer {
     /// Query ECU ID.
     fn get_ecu_id(&mut self) -> String {
-        /*
         let header = SdlHeader::EcuId;
         let data = None;
         let sdl_message = SdlMessage::new(header, data);
         let written = self.port.write(&sdl_message.to_bytes());
-        println!("wrote {:?} bytes", written);
+        //println!("wrote {:?} bytes", written);
         let bytes_written = written.unwrap();
-        let mut response_buf = vec![0; bytes_written];
+        let mut response_buf = vec![0; bytes_written.into()];
+        //println!("vec response len {:?}", response_buf.len());
         let bytes_read_echo = self.port.read(response_buf.as_mut_slice()); // echo
-        println!("read echo: {:?} bytes", bytes_read_echo);
+                                                                           //println!("read echo: {:?} bytes", bytes_read_echo.unwrap());
         let bytes_read = self.port.read(response_buf.as_mut_slice());
-        println!("read response: {:?} bytes", bytes_read);
-        */
+        //println!("read response: {:?} bytes", bytes_read.unwrap());
         "FFFF".to_string()
     }
 
     /// Query obd addresses and update raw data.
     pub fn update_raw_data(&mut self) {
+        /*
         for (_, v) in self.raw_data.iter_mut() {
             *v = v.wrapping_add(1);
         }
-        /*
+        */
         let header = SdlHeader::EcuData;
         let data = Some(ObdAddress::iter().map(|v| v as u8).collect());
+        //println!("hdr {:?}", header);
+        //println!("data {:?}", data);
         let sdl_message = SdlMessage::new(header, data);
+        //println!("sdl msg {:?}", sdl_message);
+        //println!("sdl msg as bytes: {:?}", sdl_message.to_bytes());
         let written = self.port.write(&sdl_message.to_bytes());
-        println!("wrote {:?} bytes", written);
+        //println!("wrote {:?} bytes", written);
         let bytes_written = written.unwrap();
-        let mut response_buf = vec![0; bytes_written];
-        let bytes_read_echo = self.port.read(response_buf.as_mut_slice()); // echo
-        println!("read echo: {:?} bytes", bytes_read_echo);
-        let bytes_read = self.port.read(response_buf.as_mut_slice());
-        println!("read response: {:?} bytes", bytes_read);
+        let mut echo_buf: Vec<u8> = vec![0; bytes_written.into()];
+        let mut response_buf: Vec<u8> = vec![0; bytes_written.into()];
+        //println!("response_buf: {:?}", echo_buf);
+        //println!("response_buf len: {:?}", echo_buf.len());
+        let bytes_read_echo = self.port.read_exact(&mut echo_buf); // echo
+                                                                   //println!("read echo: {:?} bytes", bytes_read_echo);
+        let bytes_read = self.port.read_exact(response_buf.as_mut_slice());
+        //println!("read response: {:?} bytes", bytes_read);
         let request = sdl_message;
-        println!("{:?}", response_buf);
+        //println!("ecu response: {:?}", response_buf);
         let response = SdlMessage::try_from(&response_buf[..]).unwrap();
 
         if let Some(addrs) = request.data {
@@ -233,7 +238,6 @@ impl SuzukiSdlViewer {
                 }
             }
         }
-        */
     }
 
     /// Update scan tool data from raw values.
@@ -481,6 +485,6 @@ impl SuzukiSdlViewer {
     /// Send ID request to ECU as a means of verifying connection.
     pub fn connect(&mut self) {
         let ecu_id = self.get_ecu_id();
-        println!("ecu_id: {}", ecu_id);
+        //println!("ecu_id: {}", ecu_id);
     }
 }
