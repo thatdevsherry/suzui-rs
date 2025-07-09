@@ -48,6 +48,7 @@ pub enum ScanToolParameter {
     EngineSpeed,
     IacFlowDutyCycle,
     AbsoluteThrottlePosition,
+    ThrottleAngle,
     InjPulseWidthCyl1,
     CoolantTemp,
     VehicleSpeed,
@@ -204,10 +205,9 @@ impl SuzukiSdlViewer {
 
     /// Query obd addresses and update raw data.
     pub fn update_raw_data(&mut self) {
-        for (k, v) in self.raw_data.iter_mut() {
+        for (_, v) in self.raw_data.iter_mut() {
             *v = v.wrapping_add(1);
         }
-        return;
         /*
         let header = SdlHeader::EcuData;
         let data = Some(ObdAddress::iter().map(|v| v as u8).collect());
@@ -286,6 +286,17 @@ impl SuzukiSdlViewer {
                         },
                     );
                 }
+                ScanToolParameter::ThrottleAngle => {
+                    let raw_value = self.raw_data.get(&ObdAddress::TpsAngle).unwrap();
+                    let processed_value = *raw_value as f32;
+                    self.scan_tool_data.insert(
+                        scan_tool_parameter,
+                        ScanToolParameterValue {
+                            value: processed_value,
+                            unit: Some("°".to_string()),
+                        },
+                    );
+                }
                 ScanToolParameter::BatteryVoltage => {
                     let raw_value = self.raw_data.get(&ObdAddress::BatteryVoltage).unwrap();
                     let processed_value = *raw_value as f32 * 0.0787;
@@ -356,7 +367,7 @@ impl SuzukiSdlViewer {
                 ScanToolParameter::AbsoluteThrottlePosition => {
                     let raw_value = self.raw_data.get(&ObdAddress::TpsVoltage).unwrap();
                     let processed_value = (*raw_value as f32 / 255.0) * 100.0;
-                    let abs_throttle_pos = self.scan_tool_data.insert(
+                    self.scan_tool_data.insert(
                         scan_tool_parameter,
                         ScanToolParameterValue {
                             value: processed_value.round(),
