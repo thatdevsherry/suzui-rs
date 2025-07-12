@@ -24,6 +24,13 @@ Still some stuff to iron out, but we're in a working state now.
 
 Oh did I tell you about how it messes up my immobilizer? Yeah I kinda have to wait for pi to boot up first otherwise it shuts off the car and immo doesn't let engine run again until i cycle key from IGN-ACC-IGN again. Oh also not having pi powered will "NEVER" start the engine, so it's like having an additional key. Custom anti-theft lock and immobilizer combo.
 
+## Showcase
+
+[video](https://youtu.be/1dXb9Y1NK0k)
+
+![Image](https://github.com/user-attachments/assets/6ac9e0a1-ed80-4a03-8fae-5db36491491f)
+
+
 ## License
 
 Copyright (c) Shehriyar Qureshi <thatdevsherry@gmail.com>
