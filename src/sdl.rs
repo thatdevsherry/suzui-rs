@@ -242,12 +242,12 @@ impl SuzukiSdlViewer {
         let request = sdl_message;
         let response = SdlMessage::try_from(&response_buf[..]).unwrap();
 
-        if let Some(addrs) = request.data {
-            if let Some(values) = response.data {
-                for (addr, value) in addrs.iter().zip(values.iter()) {
-                    if let Some(obd_addr) = ObdAddress::from_repr(*addr as usize) {
-                        self.raw_data.insert(obd_addr, *value);
-                    }
+        if let Some(addrs) = request.data
+            && let Some(values) = response.data
+        {
+            for (addr, value) in addrs.iter().zip(values.iter()) {
+                if let Some(obd_addr) = ObdAddress::from_repr(*addr as usize) {
+                    self.raw_data.insert(obd_addr, *value);
                 }
             }
         }
