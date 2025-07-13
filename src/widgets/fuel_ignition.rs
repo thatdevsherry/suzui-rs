@@ -58,7 +58,7 @@ impl Widget for FuelIgnitionBlock {
                 ))
                 .render(fuel_ignition_block_layout[1], buf);
         } else {
-            let inj_pw_percentage = ((self.inj_pw / 50.0 as f32) * 100.0).min(100.0) as u16;
+            let inj_pw_percentage = ((self.inj_pw / 20.0 as f32) * 100.0).min(100.0) as u16;
             Gauge::default()
                 .percent(inj_pw_percentage)
                 .gauge_style(Style::default().fg(Color::White))
