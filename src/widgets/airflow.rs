@@ -40,26 +40,18 @@ impl Widget for AirflowBlock {
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Length(1), // block hdr
-                Constraint::Length(1), // map
-                Constraint::Length(1), // baro
-                Constraint::Length(3), // load
+                Constraint::Length(1), // map + baro
+                Constraint::Length(1), // load
                 Constraint::Length(1), // block ftr
             ])
             .split(area.inner(Margin::new(1, 0)));
         Span::styled(
-            format!("MAP:  {:.2} kPa", self.map),
+            format!("MAP:  {:.2} ({:.2})", self.map, self.baro),
             Style::default()
                 .fg(Color::White)
                 .add_modifier(Modifier::BOLD),
         )
         .render(airflow_layout[1], buf);
-        Span::styled(
-            format!("BARO: {:.2} kPa", self.baro),
-            Style::default()
-                .fg(Color::White)
-                .add_modifier(Modifier::BOLD),
-        )
-        .render(airflow_layout[2], buf);
         let gauge_color = match self.calc_load {
             _ => Color::White,
         };
@@ -77,12 +69,12 @@ impl Widget for AirflowBlock {
             .percent(calc_load_percentage)
             .gauge_style(Style::default().fg(gauge_color))
             .label(Span::styled(
-                format!("Load: {} %", self.calc_load),
+                format!("{} %", self.calc_load),
                 Style::default()
                     .fg(Color::White)
                     .bg(Color::Black)
                     .add_modifier(Modifier::BOLD),
             ))
-            .render(airflow_layout[3], buf);
+            .render(airflow_layout[2], buf);
     }
 }

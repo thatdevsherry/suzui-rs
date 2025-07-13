@@ -40,7 +40,8 @@ impl Widget for TemperatureBlock {
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Length(1), // block hdr
-                Constraint::Length(3), // intake
+                Constraint::Length(1), // intake
+                Constraint::Length(1), // padding
                 Constraint::Length(3), // coolant
                 Constraint::Length(1), // block ftr
             ])
@@ -48,7 +49,7 @@ impl Widget for TemperatureBlock {
         let coolant_temp_layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(vec![Constraint::Length(10), Constraint::Percentage(100)])
-            .split(temperature_layout[2]);
+            .split(temperature_layout[3]);
         let intake_temp_layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(vec![Constraint::Length(10), Constraint::Percentage(100)])
@@ -89,9 +90,9 @@ impl Widget for TemperatureBlock {
         };
         let coolant_color = match self.coolant {
             temp if temp < 65 => Color::Blue,
-            temp if temp < 87 => Color::Cyan,
+            temp if temp < 86 => Color::Cyan,
             temp if temp < 101 => Color::Green,
-            temp if temp < 105 => Color::LightYellow,
+            temp if temp < 110 => Color::LightYellow,
             _ => Color::Red,
         };
         Gauge::default()

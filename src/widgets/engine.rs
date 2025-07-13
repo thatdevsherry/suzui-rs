@@ -40,9 +40,9 @@ impl Widget for EngineSpeedBlock {
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Length(1), // header
-                Constraint::Length(5), // rpm
+                Constraint::Length(3), // rpm
                 Constraint::Length(1), // desired idle
-                Constraint::Length(3), // isc flow duty
+                Constraint::Length(1), // isc flow duty
                 Constraint::Length(1), // footer
             ])
             .split(area.inner(Margin::new(1, 0)));
@@ -76,7 +76,7 @@ impl Widget for EngineSpeedBlock {
             .percent(self.isc as u16)
             .gauge_style(Style::default().fg(Color::White))
             .label(Span::styled(
-                format!("ISC: {} %", self.isc),
+                format!("{} %", self.isc),
                 Style::default()
                     .fg(Color::White)
                     .bg(Color::Black)

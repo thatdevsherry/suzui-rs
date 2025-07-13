@@ -53,7 +53,7 @@ impl Widget for ThrottleBlock {
                 Style::default().fg(Color::White)
             })
             .label(Span::styled(
-                format!("{} °", self.angle),
+                format!("{}°", self.angle),
                 Style::default()
                     .fg(Color::White)
                     .bg(Color::Black)
