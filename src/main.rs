@@ -56,7 +56,7 @@ impl App {
             self.sdl_viewer.update_raw_data(should_simulate);
             self.sdl_viewer.update_processed_data();
             terminal.draw(|frame| self.render(frame))?;
-            self.handle_crossterm_events()?;
+            self.handle_crossterm_events(should_simulate)?;
         }
         Ok(())
     }
@@ -126,8 +126,8 @@ impl App {
     ///
     /// If your application needs to perform work in between handling events, you can use the
     /// [`event::poll`] function to check if there are any events available with a timeout.
-    fn handle_crossterm_events(&mut self) -> Result<()> {
-        if poll(Duration::from_millis(0))? {
+    fn handle_crossterm_events(&mut self, should_simulate: bool) -> Result<()> {
+        if poll(Duration::from_millis(if should_simulate { 100 } else { 0 }))? {
             match event::read()? {
                 // it's important to check KeyEventKind::Press to avoid handling key release events
                 Event::Key(key) if key.kind == KeyEventKind::Press => self.on_key_event(key),
