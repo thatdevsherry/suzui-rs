@@ -58,7 +58,7 @@ impl Widget for EngineSpeedBlock {
             .percent(engine_rpm_percentage)
             .gauge_style(Style::default().fg(engine_rpm_color))
             .label(Span::styled(
-                format!("{} RPM", self.rpm),
+                format!("{} RPM", ((self.rpm + 25) / 50) * 50),
                 Style::default()
                     .fg(Color::White)
                     .bg(Color::Black)
