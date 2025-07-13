@@ -87,7 +87,7 @@ impl App {
             .constraints(vec![
                 Constraint::Length(7), // engine
                 Constraint::Length(6), // fuel/ignition
-                Constraint::Length(7), // temperatures
+                Constraint::Length(6), // temperatures
             ])
             .split(layout[0]);
         let right = Layout::default()
@@ -97,7 +97,7 @@ impl App {
                 Constraint::Length(4), // load
                 Constraint::Length(3), // electrical
                 Constraint::Length(3), // vehicle
-                Constraint::Length(5), // flags
+                Constraint::Length(4), // flags
             ])
             .split(layout[1]);
 

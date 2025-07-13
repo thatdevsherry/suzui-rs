@@ -41,7 +41,6 @@ impl Widget for TemperatureBlock {
             .constraints(vec![
                 Constraint::Length(1), // block hdr
                 Constraint::Length(1), // intake
-                Constraint::Length(1), // padding
                 Constraint::Length(3), // coolant
                 Constraint::Length(1), // block ftr
             ])
@@ -49,7 +48,7 @@ impl Widget for TemperatureBlock {
         let coolant_temp_layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(vec![Constraint::Length(10), Constraint::Percentage(100)])
-            .split(temperature_layout[3]);
+            .split(temperature_layout[2]);
         let intake_temp_layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(vec![Constraint::Length(10), Constraint::Percentage(100)])
@@ -71,7 +70,7 @@ impl Widget for TemperatureBlock {
             ])
             .split(intake_temp_layout[0]);
         Span::styled(
-            "COOLANT:",
+            "ECT:",
             Style::default()
                 .fg(Color::White)
                 .bg(Color::Black)
@@ -89,8 +88,7 @@ impl Widget for TemperatureBlock {
                 as u16
         };
         let coolant_color = match self.coolant {
-            temp if temp < 65 => Color::Blue,
-            temp if temp < 86 => Color::Cyan,
+            temp if temp < 85 => Color::Cyan,
             temp if temp < 101 => Color::Green,
             temp if temp < 110 => Color::LightYellow,
             _ => Color::Red,
@@ -99,11 +97,7 @@ impl Widget for TemperatureBlock {
             .percent(coolant_percentage)
             .gauge_style(Style::default().fg(coolant_color))
             .label(Span::styled(
-                if !self.rad_fan {
-                    format!("{} °C", self.coolant)
-                } else {
-                    format!("{} °C (FAN ON)", self.coolant)
-                },
+                format!("{} °C", self.coolant),
                 Style::default()
                     .fg(Color::White)
                     .bg(Color::Black)
@@ -111,15 +105,15 @@ impl Widget for TemperatureBlock {
             ))
             .render(coolant_temp_layout[1], buf);
         Span::styled(
-            "INTAKE:",
+            "IAT:",
             Style::default()
                 .fg(Color::White)
                 .bg(Color::Black)
                 .add_modifier(Modifier::BOLD),
         )
         .render(intake_temp_layout_text[1], buf);
-        let intake_min = -40;
-        let intake_max = 70;
+        let intake_min = 0;
+        let intake_max = 80;
         let intake_percentage = if self.intake <= intake_min {
             0
         } else if self.intake >= intake_max {
@@ -127,14 +121,11 @@ impl Widget for TemperatureBlock {
         } else {
             ((self.intake - intake_min) as f64 / (intake_max - intake_min) as f64 * 100.0) as u16
         };
-        let intake_color = if self.intake >= 60 {
-            Color::Red
-        } else if self.intake >= 45 {
-            Color::LightYellow
-        } else if self.intake >= 0 {
-            Color::Green
-        } else {
-            Color::Cyan
+        let intake_color = match self.intake {
+            iat if iat < 20 => Color::Blue,
+            iat if iat < 50 => Color::Green,
+            iat if iat < 70 => Color::Yellow,
+            _ => Color::Red,
         };
         Gauge::default()
             .percent(intake_percentage)
