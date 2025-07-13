@@ -102,7 +102,7 @@ impl Widget for TemperatureBlock {
                 if !self.rad_fan {
                     format!("{} °C", self.coolant)
                 } else {
-                    format!("         {} °C (FAN ON)", self.coolant)
+                    format!("{} °C (FAN ON)", self.coolant)
                 },
                 Style::default()
                     .fg(Color::White)
