@@ -13,7 +13,7 @@ color-eyre = "0.6.3"
 serialport = "4.7.2"
 strum = "0.27.1"
 strum_macros = "0.27.1"
-clap = { version = "4.5.40", features = ["derive"] }
+clap = { version = "4.5.41", features = ["derive"] }
 
 [profile.release]
 lto = true
