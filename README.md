@@ -26,9 +26,11 @@ Oh did I tell you about how it messes up my immobilizer? Yeah I kinda have to wa
 
 ## Showcase
 
-[video](https://youtu.be/1dXb9Y1NK0k)
+[first run of v0](https://youtu.be/1dXb9Y1NK0k)
 
-![Image](https://github.com/user-attachments/assets/6ac9e0a1-ed80-4a03-8fae-5db36491491f)
+[v1](https://youtu.be/kzO5jZieidM?si=MwVlMml7aoIghGfH)
+
+![Image](https://github.com/user-attachments/assets/3a86b3b1-85f6-4aac-82df-3ed14c51612c)
 
 
 ## License
