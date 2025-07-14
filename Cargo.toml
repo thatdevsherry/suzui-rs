@@ -14,3 +14,9 @@ serialport = "4.7.2"
 strum = "0.27.1"
 strum_macros = "0.27.1"
 clap = { version = "4.5.40", features = ["derive"] }
+
+[profile.release]
+lto = true
+codegen-units=1
+panic = "abort"
+strip = true
