@@ -35,7 +35,8 @@ Oh did I tell you about how it messes up my immobilizer? Yeah I kinda have to wa
 
 ## Setup
 
-ECU <--SDL--> OBD port <--VAG KKL cable--> Pi --RCA composite--> Stereo
+<img width="2501" height="1522" alt="image" src="https://github.com/user-attachments/assets/8a0214b6-6774-440a-b273-18c9281db501" />
+
 
 ## Building/Running
 
