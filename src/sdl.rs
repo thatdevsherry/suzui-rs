@@ -223,7 +223,22 @@ impl SuzukiSdlViewer {
             return;
         }
         let header = SdlHeader::Data;
-        let data = Some(ObdAddress::iter().map(|v| v as u8).collect());
+        let data = Some(
+            ObdAddress::iter()
+                .filter(|v| {
+                    !matches!(
+                        v,
+                        ObdAddress::FaultCodes1
+                            | ObdAddress::FaultCodes2
+                            | ObdAddress::FaultCodes3
+                            | ObdAddress::FaultCodes4
+                            | ObdAddress::FaultCodes5
+                            | ObdAddress::FaultCodes6
+                    )
+                })
+                .map(|v| v as u8)
+                .collect(),
+        );
         let sdl_message = SdlMessage::new(header, data);
         let written = self.port.as_mut().unwrap().write(&sdl_message.to_bytes());
         let bytes_written = written.unwrap();
