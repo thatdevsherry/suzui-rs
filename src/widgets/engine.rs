@@ -40,7 +40,7 @@ impl Widget for EngineSpeedBlock {
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Length(1), // header
-                Constraint::Length(3), // rpm
+                Constraint::Length(5), // rpm
                 Constraint::Length(1), // desired idle
                 Constraint::Length(1), // isc flow duty
                 Constraint::Length(1), // footer

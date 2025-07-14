@@ -85,7 +85,7 @@ impl App {
         let left = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
-                Constraint::Length(7), // engine
+                Constraint::Length(9), // engine
                 Constraint::Length(6), // fuel/ignition
                 Constraint::Length(6), // temperatures
             ])
@@ -93,7 +93,7 @@ impl App {
         let right = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
-                Constraint::Length(5), // throttle
+                Constraint::Length(7), // throttle
                 Constraint::Length(4), // load
                 Constraint::Length(3), // electrical
                 Constraint::Length(3), // vehicle

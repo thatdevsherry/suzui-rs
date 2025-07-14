@@ -46,7 +46,7 @@ impl Widget for AirflowBlock {
             ])
             .split(area.inner(Margin::new(1, 0)));
         Span::styled(
-            format!("MAP:  {:.2} ({:.2})", self.map, self.baro),
+            format!("MAP: {:.2} ({:.2})", self.map, self.baro),
             Style::default()
                 .fg(Color::White)
                 .add_modifier(Modifier::BOLD),

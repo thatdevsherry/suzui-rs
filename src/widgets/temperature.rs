@@ -8,7 +8,6 @@ use crate::sdl::EngineContext;
 pub struct TemperatureBlock {
     coolant: i8,
     intake: i8,
-    rad_fan: bool,
 }
 
 impl TemperatureBlock {
@@ -16,7 +15,6 @@ impl TemperatureBlock {
         Self {
             coolant: ctx.coolant_temp,
             intake: ctx.intake_air_temperature,
-            rad_fan: ctx.radiator_fan,
         }
     }
 }
@@ -88,7 +86,7 @@ impl Widget for TemperatureBlock {
                 as u16
         };
         let coolant_color = match self.coolant {
-            temp if temp < 85 => Color::Cyan,
+            temp if temp < 85 => Color::Blue,
             temp if temp < 101 => Color::Green,
             temp if temp < 110 => Color::LightYellow,
             _ => Color::Red,

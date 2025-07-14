@@ -41,17 +41,19 @@ impl Widget for ThrottleBlock {
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Length(1), // block hdr
-                Constraint::Length(3), // throttle
+                Constraint::Length(5), // throttle
                 Constraint::Length(1), // block ftr
             ])
             .split(area.inner(Margin::new(1, 0)));
         Gauge::default()
             .percent(self.abs_throttle_position as u16)
-            .gauge_style(if self.ctp {
-                Style::default().fg(Color::Green)
-            } else {
-                Style::default().fg(Color::White)
-            })
+            .gauge_style(Style::default().fg(match self.angle {
+                angle if angle >= 80 => Color::Blue,
+                _ => match self.ctp {
+                    true => Color::Green,
+                    false => Color::White,
+                },
+            }))
             .label(Span::styled(
                 format!("{}°", self.angle),
                 Style::default()

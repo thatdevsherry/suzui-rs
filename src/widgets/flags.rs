@@ -113,14 +113,22 @@ impl Widget for FlagsBlock {
         Span::styled(
             "RAD:",
             Style::default()
-                .fg(if self.psp { Color::Green } else { Color::White })
+                .fg(if self.rad_fan {
+                    Color::Green
+                } else {
+                    Color::White
+                })
                 .add_modifier(Modifier::BOLD),
         )
         .render(flags_layout_split_bottom[2], buf);
         Span::styled(
             if self.rad_fan { "ON" } else { "OFF" },
             Style::default()
-                .fg(if self.psp { Color::Green } else { Color::White })
+                .fg(if self.rad_fan {
+                    Color::Green
+                } else {
+                    Color::White
+                })
                 .add_modifier(Modifier::BOLD),
         )
         .render(flags_layout_split_bottom[3], buf);
