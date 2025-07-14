@@ -33,6 +33,20 @@ Oh did I tell you about how it messes up my immobilizer? Yeah I kinda have to wa
 ![Image](https://github.com/user-attachments/assets/3a86b3b1-85f6-4aac-82df-3ed14c51612c)
 
 
+## Setup
+
+ECU <--SDL--> OBD port <--VAG KKL cable--> Pi --RCA composite--> Stereo
+
+## Building/Running
+
+```bash
+# Desktop
+cargo run -- --simulate
+
+# Pi
+cross build --release --target=aarch64-unknown-linux-gnu # binary in target/aarch64-unknown-linux-gnu/release/
+```
+
 ## License
 
 Copyright (c) Shehriyar Qureshi <thatdevsherry@gmail.com>
