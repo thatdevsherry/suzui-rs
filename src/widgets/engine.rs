@@ -46,7 +46,7 @@ impl Widget for EngineSpeedBlock {
                 Constraint::Length(1), // footer
             ])
             .split(area.inner(Margin::new(1, 0)));
-        let engine_rpm_percentage = ((self.rpm as f64 / 6500 as f64) * 100.0).min(100.0) as u16;
+        let engine_rpm_percentage = ((self.rpm as f64 / 6500_f64) * 100.0).min(100.0) as u16;
         let engine_rpm_color = match self.rpm {
             rpm if rpm < 500 => Color::Red,
             rpm if rpm < 2500 => Color::White,

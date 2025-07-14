@@ -91,9 +91,9 @@ pub enum ScanToolParameter {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, FromRepr)]
 enum SdlHeader {
-    EcuId = 0x10,
-    EcuData = 0x13,
-    EcuActuate = 0x15,
+    Id = 0x10,
+    Data = 0x13,
+    Actuate = 0x15,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -129,7 +129,7 @@ impl SdlMessage {
         bytes.push(self.header as u8);
         bytes.push(self.length);
         if let Some(data) = &self.data {
-            let data_bytes: Vec<u8> = data.iter().map(|&v| v as u8).collect();
+            let data_bytes: Vec<u8> = data.to_vec();
             bytes.extend_from_slice(&data_bytes);
         }
         bytes.push(self.checksum);
@@ -145,11 +145,11 @@ impl TryFrom<&[u8]> for SdlMessage {
             return Err("length of bytes less than min. of 3".to_string());
         }
         let header = value[0];
-        let header_enum = SdlHeader::from_repr(header.into()).expect(&format!("{:?}", header));
+        let header_enum = SdlHeader::from_repr(header.into()).unwrap();
         let length = value[1];
         let data = &value[2..length as usize - 1];
-        let d = if data.len() > 0 {
-            data.to_owned().into_iter().collect()
+        let d = if !data.is_empty() {
+            data.to_vec()
         } else {
             vec![]
         };
@@ -182,11 +182,7 @@ impl Default for SuzukiSdlViewer {
             raw_data.insert(obd_address, 0);
         }
         Self {
-            port: if vag_kkl.is_ok() {
-                Some(vag_kkl.unwrap())
-            } else {
-                None
-            },
+            port: vag_kkl.ok(),
             ecu_id: None,
             raw_data,
             engine_context: EngineContext::default(),
@@ -197,12 +193,12 @@ impl Default for SuzukiSdlViewer {
 impl SuzukiSdlViewer {
     /// Query ECU ID.
     fn get_ecu_id(&mut self) -> String {
-        let header = SdlHeader::EcuId;
+        let header = SdlHeader::Id;
         let data = None;
         let sdl_message = SdlMessage::new(header, data);
         let written = self.port.as_mut().unwrap().write(&sdl_message.to_bytes());
         let bytes_written = written.unwrap();
-        let mut echo_buf = vec![0; bytes_written.into()];
+        let mut echo_buf = vec![0; bytes_written];
         let mut response_buf = vec![0; 5];
         self.port
             .as_mut()
@@ -226,13 +222,13 @@ impl SuzukiSdlViewer {
             }
             return;
         }
-        let header = SdlHeader::EcuData;
+        let header = SdlHeader::Data;
         let data = Some(ObdAddress::iter().map(|v| v as u8).collect());
         let sdl_message = SdlMessage::new(header, data);
         let written = self.port.as_mut().unwrap().write(&sdl_message.to_bytes());
         let bytes_written = written.unwrap();
-        let mut echo_buf: Vec<u8> = vec![0; bytes_written.into()];
-        let mut response_buf: Vec<u8> = vec![0; bytes_written.into()];
+        let mut echo_buf: Vec<u8> = vec![0; bytes_written];
+        let mut response_buf: Vec<u8> = vec![0; bytes_written];
         let _ = self.port.as_mut().unwrap().read_exact(&mut echo_buf); // echo
         let _ = self
             .port

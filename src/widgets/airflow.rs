@@ -52,9 +52,7 @@ impl Widget for AirflowBlock {
                 .add_modifier(Modifier::BOLD),
         )
         .render(airflow_layout[1], buf);
-        let gauge_color = match self.calc_load {
-            _ => Color::White,
-        };
+        let gauge_color = Color::White;
         let calc_load_min = 0;
         let calc_load_max = 100;
         let calc_load_percentage = if self.calc_load <= calc_load_min {
