@@ -50,8 +50,8 @@ impl Widget for EngineSpeedBlock {
         let engine_rpm_color = match self.rpm {
             rpm if rpm < 500 => Color::Red,
             rpm if rpm < 2500 => Color::White,
-            rpm if rpm < 4500 => Color::Green,
-            rpm if rpm < 6500 => Color::LightYellow,
+            rpm if rpm < 5500 => Color::Green,
+            rpm if rpm < 6000 => Color::LightYellow,
             _ => Color::Red,
         };
         Gauge::default()

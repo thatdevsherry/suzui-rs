@@ -44,15 +44,16 @@ impl Widget for ElectricalBlock {
             .split(area.inner(Margin::new(1, 0)));
         let battery_color = match self.rpm {
             rpm if rpm > 0 => match self.battery_voltage {
-                batt_volt if batt_volt < 13.2 => (Color::Red, Color::White),
-                batt_volt if batt_volt < 15.2 => (Color::Black, Color::Green),
-                _ => (Color::Red, Color::White),
+                batt_volt if batt_volt < 13.1 || batt_volt > 15.2 => (Color::Red, Color::White),
+                _ => (Color::Black, Color::Green),
             },
             _ => match self.battery_voltage {
-                batt_volt if batt_volt < 12.2 => (Color::Red, Color::White),
-                batt_volt if batt_volt < 12.4 => (Color::Black, Color::LightYellow),
-                batt_volt if batt_volt < 12.6 => (Color::Red, Color::LightYellow),
-                _ => (Color::Black, Color::White),
+                batt_volt if batt_volt <= 12.2 || batt_volt > 13.1 => (Color::Red, Color::White),
+                batt_volt if batt_volt < 12.4 || (batt_volt > 12.8 && batt_volt <= 13.1) => {
+                    (Color::Black, Color::LightYellow)
+                }
+                batt_volt if batt_volt >= 12.4 && batt_volt <= 12.8 => (Color::Black, Color::Green),
+                _ => (Color::Black, Color::Red),
             },
         };
         Span::styled(
