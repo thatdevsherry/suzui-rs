@@ -36,6 +36,7 @@ Built with rust and [ratatui](https://ratatui.rs/).
 | AC                         | AC switch                                              | ON/OFF  |
 | PSP                        | PSP switch                                             | ON/OFF  |
 | RAD                        | Radiator fan                                           | ON/OFF  |
+| Fuel cut                   | Deceleration fuel cut off (DFCO). Calc. from inj. pw   | ON/OFF  |
 
 <details>
   <summary>Not implemented</summary>
