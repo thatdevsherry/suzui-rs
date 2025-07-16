@@ -1,9 +1,10 @@
 # suzui-rs
 
-Oxidized version of my [original prototype](https://github.com/thatdevsherry/suzuki_sdl). The car loves this kind of rust.
+Oxidized version of my [original prototype](https://github.com/thatdevsherry/suzuki_sdl).
 
 Made for suzuki baleno (G13BB).
 
+Built with rust and [ratatui](https://ratatui.rs/).
 
 ## Showcase
 
