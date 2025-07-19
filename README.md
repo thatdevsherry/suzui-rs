@@ -34,7 +34,7 @@ Built with rust and [ratatui](https://ratatui.rs/).
 | Vehicle speed (VSS)        | How fast car actually go                               | km/h    |
 | EL                         | Electric load                                          | ON/OFF  |
 | AC                         | AC switch                                              | ON/OFF  |
-| PSP                        | PSP switch                                             | ON/OFF  |
+| PSP                        | Power steering pump switch                             | ON/OFF  |
 | RAD                        | Radiator fan                                           | ON/OFF  |
 | Fuel cut                   | Deceleration fuel cut off (DFCO). Calc. from inj. pw   | ON/OFF  |
 

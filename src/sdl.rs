@@ -13,6 +13,8 @@ pub struct ScanToolParameterValue {
     pub unit: Option<String>,
 }
 
+const INJECTOR_FLOW_RATE: u8 = 185;
+
 /// Struct that contains all parameters with their representative values.
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct EngineContext {
@@ -36,6 +38,7 @@ pub struct EngineContext {
     pub psp_switch: bool,
     pub radiator_fan: bool,
     pub calculated_load: u8,
+    pub instant_consumption: f32,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, Hash, FromRepr, Display)]
@@ -87,6 +90,7 @@ pub enum ScanToolParameter {
     PspSwitch,
     RadiatorFan,
     CalculatedLoad,
+    InstantFuelConsumption,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, FromRepr)]
@@ -362,6 +366,23 @@ impl SuzukiSdlViewer {
                     let baro = self.engine_context.barometric_pressure;
                     let processed_value = (map / baro) * (293.15 / (iat as f32 + 273.15)) * 100.0;
                     self.engine_context.calculated_load = processed_value as u8;
+                }
+                ScanToolParameter::InstantFuelConsumption => {
+                    let inj_pw = self.engine_context.injector_pulse_width_cyl_1;
+                    let rpm = self.engine_context.engine_speed as f32;
+                    let vss = self.engine_context.vehicle_speed as f32;
+
+                    // calculate duty cycle
+                    let engine_cycle_time: f32 = 60_000f32 / (rpm * 2.0);
+                    let duty_cycle = inj_pw / engine_cycle_time;
+
+                    // calculate fuel flow rate
+                    let actual_flow_per_injector = INJECTOR_FLOW_RATE as f32 * duty_cycle;
+                    let total_fuel_flow = actual_flow_per_injector * 4.0;
+                    let fuel_flow_rate = total_fuel_flow * 60.0 / 1000.0;
+                    let instant_consumption = (fuel_flow_rate / vss) * 100.0;
+
+                    self.engine_context.instant_consumption = instant_consumption;
                 }
                 ScanToolParameter::PspSwitch => {
                     let raw_value = self.raw_data.get(&ObdAddress::StatusFlags).unwrap();

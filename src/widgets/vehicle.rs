@@ -7,12 +7,14 @@ use crate::sdl::EngineContext;
 
 pub struct VehicleBlock {
     speed: u8,
+    instant_consumption: f32,
 }
 
 impl VehicleBlock {
     pub fn new(ctx: &EngineContext) -> Self {
         Self {
             speed: ctx.vehicle_speed,
+            instant_consumption: ctx.instant_consumption,
         }
     }
 }
@@ -40,6 +42,10 @@ impl Widget for VehicleBlock {
                 Constraint::Length(1),
             ])
             .split(area.inner(Margin::new(1, 0)));
+        let row = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(speed_block[1]);
         let speed_color = match self.speed {
             speed if speed < 60 => (Color::Black, Color::White),
             speed if speed <= 80 => (Color::Black, Color::Green),
@@ -47,12 +53,17 @@ impl Widget for VehicleBlock {
             _ => (Color::Red, Color::White),
         };
         let speed = Span::styled(
-            format!("Speed: {} km/h", self.speed),
+            format!("{} km/h", self.speed),
             Style::default()
                 .bg(speed_color.0)
                 .fg(speed_color.1)
                 .add_modifier(Modifier::BOLD),
         );
-        speed.render(speed_block[1], buf);
+        let instant_consumption = Span::styled(
+            format!("{:.1} L/100km", self.instant_consumption),
+            Style::default().add_modifier(Modifier::BOLD),
+        );
+        speed.render(row[0], buf);
+        instant_consumption.render(row[1], buf);
     }
 }
