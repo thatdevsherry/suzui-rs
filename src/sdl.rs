@@ -2,7 +2,7 @@ use serialport::TTYPort;
 use std::{
     collections::HashMap,
     io::{Read, Write},
-    time::Duration,
+    time::{Duration, Instant},
 };
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, FromRepr};
@@ -13,32 +13,93 @@ pub struct ScanToolParameterValue {
     pub unit: Option<String>,
 }
 
-const INJECTOR_FLOW_RATE: u8 = 185;
+const INJECTOR_FLOW_RATE: u8 = 185; // Flow rate for a single injector in (cc/min).
 
-/// Struct that contains all parameters with their representative values.
+/// Struct that contains all processed engine parameters with their representative values.
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct EngineContext {
+    /// Intended idle by ECU. Affected by A/C idle-up and ECT.
     pub desired_idle: u16,
+
+    /// Current engine RPM.
     pub engine_speed: u16,
+
+    /// ISC flow duty i.e. how much IACV valve is open, expressed as a percentage from 0-100%.
     pub isc_flow_duty: u8,
+
+    /// Throttle position expressed as a percentage of 0-100% of the input voltage to TPS.
     pub absolute_throttle_position: u8,
+
+    /// Calculated throttle angle by ECU.
     pub throttle_angle: u8,
+
+    /// Injector pulse width of injector for cylinder 1. Although not explicitly mentioned, this
+    /// usually means the same value will be used for all injectors sequentially and there is no
+    /// support for individual injector pulse width.
     pub injector_pulse_width_cyl_1: f32,
+
+    /// Temperature reading by Engine Coolant Temperature (ECT) sensor.
     pub coolant_temp: i8,
+
+    /// Vehicle speed processed by ECU from Vehicle Speed Sensor (VSS).
     pub vehicle_speed: u8,
+
+    /// Temperature reading by Intake Air Temperature (IAT) sensor.
     pub intake_air_temperature: i8,
+
+    /// Reading from MAP sensor in kPa.
     pub manifold_absolute_pressure: f32,
+
+    /// Reading from MAP sensor in kPa, taken just before the first crank. No dedicated sensor.
     pub barometric_pressure: f32,
+
+    /// Battery voltage as read by the ECU. This is not indicative of the actual battery voltage,
+    /// just what the ECU is being supplied through the dedicated BATT+ wire.
     pub battery_voltage: f32,
+
+    /// Ignition advance as being commanded by the ECU. Fixed spark is 5 BTDC for verification.
     pub ignition_advance: i8,
+
+    /// Switch to tell if throttle is fully closed. Used to engage idle strategy, fuel cut etc.
     pub closed_throttle_position: bool,
+
+    /// Switch to tell if electric load is active, triggered by defogger & tail-lights.
     pub electric_load: bool,
+
+    /// Custom switch that tells if fuel cut (DFCO) is active.
     pub fuel_cut: bool,
+
+    /// Switch that tells if A/C compressor is active. This is tied to the actual A/C signal that
+    /// is sent by the ECU towards the A/C system and is not a reflection of the A/C button.
     pub ac_switch: bool,
+
+    /// Switch to indicate if Power Steering Pump (PSP) switch is closed.
     pub psp_switch: bool,
+
+    /// Switch to indicate if radiator fan is running. I'm not sure if it's just a boolean that
+    /// turns ON once the temp threshold goes past or if it is activated when the fan relay is
+    /// actually working.
     pub radiator_fan: bool,
+
+    /// Custom calculation related to OBD2 formula that calculates engine load since ECU does not
+    /// provide us with it's own value. Hence calculated.
     pub calculated_load: u8,
-    pub instant_consumption: f32,
+
+    /// Instant fuel consumption using fuel flow and speed. Useful only for analyzing driving
+    /// habits relation to fuel consumption. Measured in (L/100km).
+    pub instant_consumption: f64,
+
+    /// Cumulative distance measured in kilometres (km).
+    pub cumulative_distance: f64,
+
+    /// Cumulative fuel usage measured in litres (L).
+    pub cumulative_fuel: f64,
+
+    /// Long term fuel consumption based on distance, expressed in (L/100km).
+    pub fuel_consumption: f64,
+
+    /// Time when ECU was last polled for data.
+    pub last_poll: Option<Instant>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, Hash, FromRepr, Display)]
@@ -90,7 +151,7 @@ pub enum ScanToolParameter {
     PspSwitch,
     RadiatorFan,
     CalculatedLoad,
-    InstantFuelConsumption,
+    FuelConsumption,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, FromRepr)]
@@ -367,22 +428,43 @@ impl SuzukiSdlViewer {
                     let processed_value = (map / baro) * (293.15 / (iat as f32 + 273.15)) * 100.0;
                     self.engine_context.calculated_load = processed_value as u8;
                 }
-                ScanToolParameter::InstantFuelConsumption => {
-                    let inj_pw = self.engine_context.injector_pulse_width_cyl_1;
-                    let rpm = self.engine_context.engine_speed as f32;
-                    let vss = self.engine_context.vehicle_speed as f32;
+                ScanToolParameter::FuelConsumption => {
+                    let now = Instant::now();
+                    if let Some(last_poll) = self.engine_context.last_poll {
+                        let inj_pw = self.engine_context.injector_pulse_width_cyl_1;
+                        let rpm = self.engine_context.engine_speed as f64;
+                        let vss = self.engine_context.vehicle_speed as f64;
 
-                    // calculate duty cycle
-                    let engine_cycle_time: f32 = 60_000f32 / (rpm * 2.0);
-                    let duty_cycle = inj_pw / engine_cycle_time;
+                        // calculate duty cycle
+                        let engine_cycle_time = 60_000f64 / (rpm * 2.0);
+                        let duty_cycle = (inj_pw as f64) / engine_cycle_time;
 
-                    // calculate fuel flow rate
-                    let actual_flow_per_injector = INJECTOR_FLOW_RATE as f32 * duty_cycle;
-                    let total_fuel_flow = actual_flow_per_injector * 4.0;
-                    let fuel_flow_rate = total_fuel_flow * 60.0 / 1000.0;
-                    let instant_consumption = (fuel_flow_rate / vss) * 100.0;
+                        // calculate fuel flow rate
+                        let actual_flow_per_injector = INJECTOR_FLOW_RATE as f64 * duty_cycle;
+                        let total_fuel_flow = actual_flow_per_injector * 4.0;
+                        let fuel_flow_rate_litres_per_hour = total_fuel_flow * 60.0 / 1000.0;
 
-                    self.engine_context.instant_consumption = instant_consumption;
+                        let time_delta = Instant::now().duration_since(last_poll).as_secs_f64();
+                        let fuel_flow_litres_per_second = fuel_flow_rate_litres_per_hour / 3600.0; // L/second
+
+                        // accumulate
+                        let fuel_this_poll = fuel_flow_litres_per_second * time_delta;
+                        let distance_this_poll = vss * (time_delta / 3600.0);
+
+                        let instant_consumption = if vss > 0.0 {
+                            (fuel_flow_rate_litres_per_hour / vss) * 100.0
+                        } else {
+                            0.0
+                        };
+                        self.engine_context.cumulative_distance += distance_this_poll;
+                        self.engine_context.cumulative_fuel += fuel_this_poll;
+                        self.engine_context.instant_consumption = instant_consumption;
+                        self.engine_context.fuel_consumption =
+                            (self.engine_context.cumulative_fuel
+                                / self.engine_context.cumulative_distance)
+                                * 100.0;
+                    }
+                    self.engine_context.last_poll = Some(now);
                 }
                 ScanToolParameter::PspSwitch => {
                     let raw_value = self.raw_data.get(&ObdAddress::StatusFlags).unwrap();
