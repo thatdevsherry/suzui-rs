@@ -1,13 +1,15 @@
 use ratatui::{
     prelude::*,
-    widgets::{Block, Borders},
+    widgets::{Block, Borders, Paragraph},
 };
 
 use crate::sdl::EngineContext;
 
 pub struct VehicleBlock {
     speed: u8,
-    instant_consumption: f32,
+    instant_consumption: f64,
+    fuel_consumption: f64,
+    distance_travelled: f64,
 }
 
 impl VehicleBlock {
@@ -15,6 +17,8 @@ impl VehicleBlock {
         Self {
             speed: ctx.vehicle_speed,
             instant_consumption: ctx.instant_consumption,
+            fuel_consumption: ctx.fuel_consumption,
+            distance_travelled: ctx.cumulative_distance,
         }
     }
 }
@@ -38,32 +42,45 @@ impl Widget for VehicleBlock {
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Length(1),
-                Constraint::Length(1),
+                Constraint::Length(1), // row 1
+                Constraint::Length(1), // row 2
                 Constraint::Length(1),
             ])
             .split(area.inner(Margin::new(1, 0)));
         let row = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
+            .constraints(vec![Constraint::Percentage(100), Constraint::Length(5)])
             .split(speed_block[1]);
+        let row_two = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![Constraint::Percentage(100), Constraint::Length(5)])
+            .split(speed_block[2]);
         let speed_color = match self.speed {
             speed if speed < 60 => (Color::Black, Color::White),
             speed if speed <= 80 => (Color::Black, Color::Green),
             speed if speed <= 110 => (Color::Black, Color::LightYellow),
             _ => (Color::Red, Color::White),
         };
-        let speed = Span::styled(
-            format!("{} km/h", self.speed),
-            Style::default()
-                .bg(speed_color.0)
-                .fg(speed_color.1)
-                .add_modifier(Modifier::BOLD),
-        );
-        let instant_consumption = Span::styled(
-            format!("{:.1} L/100km", self.instant_consumption),
-            Style::default().add_modifier(Modifier::BOLD),
-        );
-        speed.render(row[0], buf);
-        instant_consumption.render(row[1], buf);
+        let speed = Paragraph::new(self.speed.to_string())
+            .style(Style::default().bg(speed_color.0).fg(speed_color.1))
+            .centered()
+            .bold();
+        let speed_unit = Paragraph::new("kph")
+            .style(Style::default().bg(speed_color.0).fg(speed_color.1))
+            .centered()
+            .bold();
+        let fuel_consumption = Paragraph::new(format!(
+            "FC: {:.1} ({:.1})",
+            self.fuel_consumption, self.instant_consumption
+        ))
+        .bold()
+        .white();
+        let odo = Paragraph::new(format!("ODO: {:.1} km", self.distance_travelled))
+            .bold()
+            .white();
+        fuel_consumption.render(row_two[0], buf);
+        odo.render(row[0], buf);
+        speed.render(row[1], buf);
+        speed_unit.render(row_two[1], buf);
     }
 }
