@@ -96,8 +96,8 @@ impl App {
                 Constraint::Length(7), // throttle
                 Constraint::Length(4), // load
                 Constraint::Length(3), // electrical
-                Constraint::Length(3), // vehicle
-                Constraint::Length(4), // flags
+                Constraint::Length(4), // vehicle
+                Constraint::Length(3), // flags
             ])
             .split(layout[1]);
 
