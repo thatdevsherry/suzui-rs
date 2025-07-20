@@ -1,5 +1,5 @@
 use clap::Parser;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, poll};
@@ -9,6 +9,7 @@ use ratatui::{
 };
 use suzui_rs::{
     sdl::SuzukiSdlViewer,
+    strings::DISTANCE_FUEL_FILE_PATH,
     widgets::{
         airflow::AirflowBlock, electrical::ElectricalBlock, engine::EngineSpeedBlock,
         flags::FlagsBlock, fuel_ignition::FuelIgnitionBlock, temperature::TemperatureBlock,
@@ -33,17 +34,33 @@ fn main() -> color_eyre::Result<()> {
 }
 
 /// The main application which holds the state and logic of the application.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct App {
     /// Is the application running?
     running: bool,
     sdl_viewer: SuzukiSdlViewer,
+    last_write: Instant,
 }
 
 impl App {
     /// Construct a new instance of [`App`].
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            running: false,
+            sdl_viewer: SuzukiSdlViewer::default(),
+            last_write: Instant::now(),
+        }
+    }
+
+    fn persistence_write(&self) -> Result<()> {
+        let distance = self.sdl_viewer.engine_context.cumulative_distance;
+        let fuel = self.sdl_viewer.engine_context.cumulative_fuel;
+
+        let data = format!("{},{}", distance, fuel);
+        let tmp_file = &format!("{}.tmp", DISTANCE_FUEL_FILE_PATH);
+        std::fs::write(tmp_file, data)?;
+        std::fs::rename(tmp_file, DISTANCE_FUEL_FILE_PATH)?;
+        Ok(())
     }
 
     /// Run the application's main loop.
@@ -57,6 +74,11 @@ impl App {
             self.sdl_viewer.update_processed_data();
             terminal.draw(|frame| self.render(frame))?;
             self.handle_crossterm_events(should_simulate)?;
+
+            if self.last_write.elapsed() > Duration::from_secs(15) {
+                self.persistence_write()?;
+                self.last_write = Instant::now();
+            }
         }
         Ok(())
     }

@@ -7,6 +7,8 @@ use std::{
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, FromRepr};
 
+use crate::strings::DISTANCE_FUEL_FILE_PATH;
+
 #[derive(Debug)]
 pub struct ScanToolParameterValue {
     pub value: f32,
@@ -246,11 +248,20 @@ impl Default for SuzukiSdlViewer {
         for obd_address in ObdAddress::iter() {
             raw_data.insert(obd_address, 0);
         }
+
+        // load up cumulative data from file if valid.
+        let mut engine_context = EngineContext::default();
+        let distance_fuel =
+            std::fs::read_to_string(DISTANCE_FUEL_FILE_PATH).unwrap_or("0.0,0.0".to_string());
+        let split: Vec<&str> = distance_fuel.split(",").collect();
+        engine_context.cumulative_distance = split[0].parse().unwrap_or(0.0);
+        engine_context.cumulative_fuel = split[1].parse().unwrap_or(0.0);
+
         Self {
             port: vag_kkl.ok(),
             ecu_id: None,
             raw_data,
-            engine_context: EngineContext::default(),
+            engine_context,
         }
     }
 }
