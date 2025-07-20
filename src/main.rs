@@ -85,9 +85,6 @@ impl App {
         }
         while self.running {
             self.sdl_viewer.update_raw_data(should_simulate);
-            self.sdl_viewer.update_processed_data();
-            terminal.draw(|frame| self.render(frame))?;
-            self.handle_crossterm_events(should_simulate)?;
 
             // Trip meter reset logic
             if self
@@ -97,11 +94,16 @@ impl App {
                 self.reset_trip_meter();
             }
 
+            self.sdl_viewer.update_processed_data();
+
             // Write to file
             if self.last_write.elapsed() > Duration::from_secs(15) {
                 self.persistence_write()?;
                 self.last_write = Instant::now();
             }
+
+            terminal.draw(|frame| self.render(frame))?;
+            self.handle_crossterm_events(should_simulate)?;
         }
         Ok(())
     }
