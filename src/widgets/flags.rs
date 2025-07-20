@@ -60,20 +60,20 @@ impl Widget for FlagsBlock {
             .bg(if self.el { Color::Green } else { Color::Black })
             .centered()
             .bold()
-            .render(flags_layout_split[0].inner(Margin::new(1, 0)), buf);
+            .render(flags_layout_split[0], buf);
         Paragraph::new("A/C")
             .white()
             .bg(if self.ac { Color::Green } else { Color::Black })
             .bold()
             .centered()
-            .render(flags_layout_split[1].inner(Margin::new(1, 0)), buf);
+            .render(flags_layout_split[1], buf);
         Paragraph::new("PSP")
             .white()
             .bold()
             .bg(if self.psp { Color::Green } else { Color::Black })
             .centered()
-            .render(flags_layout_split[2].inner(Margin::new(1, 0)), buf);
-        Paragraph::new("RAD")
+            .render(flags_layout_split[2], buf);
+        Paragraph::new("R/F")
             .white()
             .bold()
             .bg(if self.rad_fan {
@@ -82,6 +82,6 @@ impl Widget for FlagsBlock {
                 Color::Black
             })
             .centered()
-            .render(flags_layout_split[3].inner(Margin::new(1, 0)), buf);
+            .render(flags_layout_split[3], buf);
     }
 }
