@@ -10,6 +10,7 @@ pub struct FuelIgnitionBlock {
     fuel_cut: bool,
     ignition_advance: i8,
     fuel_used: f64,
+    fuel_flow_rate: f64,
 }
 
 impl FuelIgnitionBlock {
@@ -19,6 +20,7 @@ impl FuelIgnitionBlock {
             fuel_cut: ctx.fuel_cut,
             ignition_advance: ctx.ignition_advance,
             fuel_used: ctx.cumulative_fuel,
+            fuel_flow_rate: ctx.fuel_flow_rate,
         }
     }
 }
@@ -49,7 +51,7 @@ impl Widget for FuelIgnitionBlock {
             .split(area.inner(Margin::new(1, 0)));
         let row_two = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
+            .constraints(vec![Constraint::Length(8), Constraint::Percentage(100)])
             .split(fuel_ignition_block_layout[2]);
         if self.fuel_cut {
             Gauge::default()
@@ -77,14 +79,17 @@ impl Widget for FuelIgnitionBlock {
                 ))
                 .render(fuel_ignition_block_layout[1], buf);
         }
-        Paragraph::new(format!("IGN ADV: {}", self.ignition_advance))
+        Paragraph::new(format!("ADV: {}", self.ignition_advance))
             .white()
             .bold()
             .render(row_two[0], buf);
-        Paragraph::new(format!("L/U: {:.1}", self.fuel_used))
-            .white()
-            .bold()
-            .centered()
-            .render(row_two[1], buf);
+        Paragraph::new(format!(
+            "{:.1} ({:.1})",
+            self.fuel_used, self.fuel_flow_rate
+        ))
+        .white()
+        .bold()
+        .centered()
+        .render(row_two[1], buf);
     }
 }
