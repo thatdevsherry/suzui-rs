@@ -10,6 +10,7 @@ use ratatui::{
 use suzui_rs::{
     sdl::SuzukiSdlViewer,
     strings::DISTANCE_FUEL_FILE_PATH,
+    toggle_detector::ToggleDetector,
     widgets::{
         airflow::AirflowBlock, electrical::ElectricalBlock, engine::EngineSpeedBlock,
         flags::FlagsBlock, fuel_ignition::FuelIgnitionBlock, temperature::TemperatureBlock,
@@ -28,7 +29,7 @@ fn main() -> color_eyre::Result<()> {
     let args = Args::parse();
     color_eyre::install()?;
     let terminal = ratatui::init();
-    let result = App::new().run(terminal, args.simulate);
+    let result = App::default().run(terminal, args.simulate);
     ratatui::restore();
     result
 }
@@ -40,6 +41,13 @@ pub struct App {
     running: bool,
     sdl_viewer: SuzukiSdlViewer,
     last_write: Instant,
+    trip_reset_detector: ToggleDetector,
+}
+
+impl Default for App {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl App {
@@ -49,6 +57,7 @@ impl App {
             running: false,
             sdl_viewer: SuzukiSdlViewer::default(),
             last_write: Instant::now(),
+            trip_reset_detector: ToggleDetector::default(),
         }
     }
 
@@ -56,11 +65,16 @@ impl App {
         let distance = self.sdl_viewer.engine_context.cumulative_distance;
         let fuel = self.sdl_viewer.engine_context.cumulative_fuel;
 
-        let data = format!("{},{}", distance, fuel);
-        let tmp_file = &format!("{}.tmp", DISTANCE_FUEL_FILE_PATH);
+        let data = format!("{distance},{fuel}");
+        let tmp_file = &format!("{DISTANCE_FUEL_FILE_PATH}.tmp");
         std::fs::write(tmp_file, data)?;
         std::fs::rename(tmp_file, DISTANCE_FUEL_FILE_PATH)?;
         Ok(())
+    }
+
+    fn reset_trip_meter(&mut self) {
+        self.sdl_viewer.engine_context.cumulative_distance = 0.0;
+        self.sdl_viewer.engine_context.cumulative_fuel = 0.0;
     }
 
     /// Run the application's main loop.
@@ -75,6 +89,15 @@ impl App {
             terminal.draw(|frame| self.render(frame))?;
             self.handle_crossterm_events(should_simulate)?;
 
+            // Trip meter reset logic
+            if self
+                .trip_reset_detector
+                .update(self.sdl_viewer.engine_context.electric_load)
+            {
+                self.reset_trip_meter();
+            }
+
+            // Write to file
             if self.last_write.elapsed() > Duration::from_secs(15) {
                 self.persistence_write()?;
                 self.last_write = Instant::now();
