@@ -100,6 +100,9 @@ pub struct EngineContext {
     /// Long term fuel consumption based on distance, expressed in (L/100km).
     pub fuel_consumption: f64,
 
+    /// Instantaneous fuel flow rate in (L/hr).
+    pub fuel_flow_rate: f64,
+
     /// Time when ECU was last polled for data.
     pub last_poll: Option<Instant>,
 }
@@ -442,38 +445,48 @@ impl SuzukiSdlViewer {
                 ScanToolParameter::FuelConsumption => {
                     let now = Instant::now();
                     if let Some(last_poll) = self.engine_context.last_poll {
-                        let inj_pw = self.engine_context.injector_pulse_width_cyl_1;
                         let rpm = self.engine_context.engine_speed as f64;
-                        let vss = self.engine_context.vehicle_speed as f64;
+                        if rpm > 0.0 {
+                            let inj_pw = self.engine_context.injector_pulse_width_cyl_1;
+                            let vss = self.engine_context.vehicle_speed as f64;
 
-                        // calculate duty cycle
-                        let engine_cycle_time = 60_000f64 / (rpm * 2.0);
-                        let duty_cycle = (inj_pw as f64) / engine_cycle_time;
+                            // calculate duty cycle
+                            let engine_cycle_time = 60_000f64 / (rpm * 2.0);
+                            let duty_cycle = (inj_pw as f64) / engine_cycle_time;
 
-                        // calculate fuel flow rate
-                        let actual_flow_per_injector = INJECTOR_FLOW_RATE as f64 * duty_cycle;
-                        let total_fuel_flow = actual_flow_per_injector * 4.0;
-                        let fuel_flow_rate_litres_per_hour = total_fuel_flow * 60.0 / 1000.0;
+                            // calculate fuel flow rate
+                            let actual_flow_per_injector = INJECTOR_FLOW_RATE as f64 * duty_cycle;
+                            let total_fuel_flow = actual_flow_per_injector * 4.0;
+                            let fuel_flow_rate_litres_per_hour = total_fuel_flow * 60.0 / 1000.0;
 
-                        let time_delta = Instant::now().duration_since(last_poll).as_secs_f64();
-                        let fuel_flow_litres_per_second = fuel_flow_rate_litres_per_hour / 3600.0; // L/second
+                            let time_delta = Instant::now().duration_since(last_poll).as_secs_f64();
+                            let fuel_flow_litres_per_second =
+                                fuel_flow_rate_litres_per_hour / 3600.0; // L/second
 
-                        // accumulate
-                        let fuel_this_poll = fuel_flow_litres_per_second * time_delta;
-                        let distance_this_poll = vss * (time_delta / 3600.0);
+                            // accumulate
+                            let fuel_this_poll = fuel_flow_litres_per_second * time_delta;
+                            let distance_this_poll = vss * (time_delta / 3600.0);
 
-                        let instant_consumption = if vss > 0.0 {
-                            (fuel_flow_rate_litres_per_hour / vss) * 100.0
-                        } else {
-                            0.0
-                        };
-                        self.engine_context.cumulative_distance += distance_this_poll;
-                        self.engine_context.cumulative_fuel += fuel_this_poll;
-                        self.engine_context.instant_consumption = instant_consumption;
-                        self.engine_context.fuel_consumption =
-                            (self.engine_context.cumulative_fuel
-                                / self.engine_context.cumulative_distance)
-                                * 100.0;
+                            let instant_consumption: f64;
+                            if vss > 0.0 {
+                                instant_consumption =
+                                    (fuel_flow_rate_litres_per_hour / vss) * 100.0;
+                                self.engine_context.cumulative_distance += distance_this_poll;
+                            } else {
+                                instant_consumption = 0.0;
+                            }
+                            self.engine_context.fuel_flow_rate = fuel_flow_rate_litres_per_hour;
+                            self.engine_context.cumulative_fuel += fuel_this_poll;
+                            self.engine_context.instant_consumption = instant_consumption;
+                            self.engine_context.fuel_consumption =
+                                if self.engine_context.cumulative_distance > 0.0 {
+                                    (self.engine_context.cumulative_fuel
+                                        / self.engine_context.cumulative_distance)
+                                        * 100.0
+                                } else {
+                                    0.0
+                                };
+                        }
                     }
                     self.engine_context.last_poll = Some(now);
                 }
