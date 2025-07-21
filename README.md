@@ -16,27 +16,34 @@ Built with rust and [ratatui](https://ratatui.rs/).
 
 ## Features
 
-| Parameter                  | Description                                            | Unit    |
-| -------------------------- | ------------------------------------------------------ | ------- |
-| Engine speed               | How much engine is vrooming                            | RPM     |
-| Desired idle               | Intended idle by ECU                                   | RPM     |
-| ISC flow duty              | How much IACV is open                                  | %       |
-| Inj. pulse width           | pulse width of injector in cylinder 1                  | ms      |
-| Ignition advance           | Ignition advance commanded by ECU                      | BTDC    |
-| IAT                        | Intake air temperature                                 | C       |
-| ECT                        | Engine coolant temperature                             | C       |
-| Absolute throttle position | Throttle position based on full TPS range              | %       |
-| Throttle angle             | Calculated throttle (butterfly valve) angle            | degrees |
-| MAP                        | Manifold absolute pressure                             | kPa     |
-| BARO                       | Barometric pressure, taken from MAP before first crank | kPa     |
-| Calc. load                 | Calculated engine load (accurate approx. based on avail. data)                 | %       |
-| Battery voltage            | Battery voltage read by ECU                            | V       |
-| Vehicle speed (VSS)        | How fast car actually go                               | km/h    |
-| EL                         | Electric load                                          | ON/OFF  |
-| AC                         | AC switch                                              | ON/OFF  |
-| PSP                        | Power steering pump switch                             | ON/OFF  |
-| RAD                        | Radiator fan                                           | ON/OFF  |
-| Fuel cut                   | Deceleration fuel cut off (DFCO). Calc. from inj. pw   | ON/OFF  |
+| Parameter                  | Description                                                      | Unit    |
+| -------------------------- | -----------------------------------------------------------------| ------- |
+| Engine speed               | How much engine is vrooming                                      | RPM     |
+| Desired idle               | Intended idle by ECU                                             | RPM     |
+| ISC flow duty              | How much IACV is open                                            | %       |
+| Inj. pulse width           | pulse width of injector in cylinder 1                            | ms      |
+| Ignition advance           | Ignition advance commanded by ECU                                | BTDC    |
+| IAT                        | Intake air temperature                                           | C       |
+| ECT                        | Engine coolant temperature                                       | C       |
+| Absolute throttle position | Throttle position based on full TPS range                        | %       |
+| Throttle angle             | Calculated throttle (butterfly valve) angle                      | degrees |
+| MAP                        | Manifold absolute pressure                                       | kPa     |
+| BARO                       | Barometric pressure, taken from MAP before first crank           | kPa     |
+| Calc. load                 | Calculated engine load (accurate approx. based on avail. data)   | %       |
+| Battery voltage            | Battery voltage read by ECU                                      | V       |
+| Vehicle speed (VSS)        | How fast car actually go                                         | km/h    |
+| EL                         | Electric load                                                    | ON/OFF  |
+| AC                         | AC switch                                                        | ON/OFF  |
+| PSP                        | Power steering pump switch                                       | ON/OFF  |
+| RAD                        | Radiator fan                                                     | ON/OFF  |
+| Fuel cut                   | Deceleration fuel cut off (DFCO). Calc. from inj. pw             | ON/OFF  |
+| Total fuel used<sup>*</sup>            | Track fuel use when engine running until explicit reset          | litres  |
+| Cumulative fuel<sup>*</sup>            | Fuel used when engine running and vehicle moving                 | litres  |
+| Cumulative distance<sup>*</sup>        | Distance covered by car (odometer) until explicit reset          | ON/OFF  |
+| Instant fuel consumption<sup>*</sup>   | Instantaneous fuel consumption at specific moment in time        | L/100km |
+| Long-term fuel consumption<sup>*</sup> | Long-term fuel consumption using only for moving car             | L/100km |
+
+Parameters marked <sup>*<sup> are not stable
 
 <details>
   <summary>Not implemented</summary>
