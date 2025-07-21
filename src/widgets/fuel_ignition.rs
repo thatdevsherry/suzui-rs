@@ -19,7 +19,7 @@ impl FuelIgnitionBlock {
             inj_pw: ctx.injector_pulse_width_cyl_1,
             fuel_cut: ctx.fuel_cut,
             ignition_advance: ctx.ignition_advance,
-            fuel_used: ctx.cumulative_fuel,
+            fuel_used: ctx.total_fuel_used,
             fuel_flow_rate: ctx.fuel_flow_rate,
         }
     }
