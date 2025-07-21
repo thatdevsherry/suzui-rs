@@ -11,7 +11,7 @@ crossterm = "0.28.1"
 ratatui = "0.29.0"
 color-eyre = "0.6.3"
 serialport = "4.7.2"
-strum = "0.27.1"
+strum = "0.27.2"
 strum_macros = "0.27.1"
 clap = { version = "4.5.40", features = ["derive"] }
 
