@@ -3,7 +3,7 @@
 // as writeable, saving to `/boot` is easiest as that is on another
 // partition and is still writeable even if "ro" flag is set.
 #[cfg(target_arch = "aarch64")]
-pub const DISTANCE_FUEL_FILE_PATH: &str = "/boot/distance_fuel";
+pub const DISTANCE_FUEL_FILE_PATH: &str = "/boot/firmware/distance_fuel";
 
 #[cfg(not(target_arch = "aarch64"))]
 pub const DISTANCE_FUEL_FILE_PATH: &str = "/tmp/distance_fuel";
