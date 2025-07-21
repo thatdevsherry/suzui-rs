@@ -2,10 +2,10 @@ use clap::Parser;
 use std::time::{Duration, Instant};
 
 use color_eyre::Result;
-use crossterm::event::{self, poll, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, poll};
 use ratatui::{
-    layout::{Constraint, Direction, Layout},
     DefaultTerminal, Frame,
+    layout::{Constraint, Direction, Layout},
 };
 use suzui_rs::{
     sdl::SuzukiSdlViewer,
