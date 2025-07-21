@@ -2,10 +2,10 @@ use clap::Parser;
 use std::time::{Duration, Instant};
 
 use color_eyre::Result;
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, poll};
+use crossterm::event::{self, poll, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ratatui::{
-    DefaultTerminal, Frame,
     layout::{Constraint, Direction, Layout},
+    DefaultTerminal, Frame,
 };
 use suzui_rs::{
     sdl::SuzukiSdlViewer,
@@ -62,10 +62,12 @@ impl App {
     }
 
     fn persistence_write(&self) -> Result<()> {
-        let distance = self.sdl_viewer.engine_context.cumulative_distance;
-        let fuel = self.sdl_viewer.engine_context.cumulative_fuel;
+        let cumulative_distance = self.sdl_viewer.engine_context.cumulative_distance;
+        let cumulative_fuel = self.sdl_viewer.engine_context.cumulative_fuel;
+        let total_fuel = self.sdl_viewer.engine_context.total_fuel_used;
 
-        let data = format!("{distance},{fuel}");
+        // also save to file with full precision
+        let data = format!("{cumulative_distance:?},{cumulative_fuel:?},{total_fuel:?}");
         let tmp_file = &format!("{DISTANCE_FUEL_FILE_PATH}.tmp");
         std::fs::write(tmp_file, data)?;
         std::fs::rename(tmp_file, DISTANCE_FUEL_FILE_PATH)?;
@@ -75,6 +77,8 @@ impl App {
     fn reset_trip_meter(&mut self) {
         self.sdl_viewer.engine_context.cumulative_distance = 0.0;
         self.sdl_viewer.engine_context.cumulative_fuel = 0.0;
+        self.sdl_viewer.engine_context.total_fuel_used = 0.0;
+        self.persistence_write().unwrap();
     }
 
     /// Run the application's main loop.
@@ -92,6 +96,7 @@ impl App {
                 .update(self.sdl_viewer.engine_context.electric_load)
             {
                 self.reset_trip_meter();
+                self.last_write = Instant::now();
             }
 
             self.sdl_viewer.update_processed_data();

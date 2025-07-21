@@ -15,7 +15,9 @@ pub struct ScanToolParameterValue {
     pub unit: Option<String>,
 }
 
-const INJECTOR_FLOW_RATE: u8 = 185; // Flow rate for a single injector in (cc/min).
+/// Flow rate for a single injector in (cc/min). Spec for inj. is about 38-48 (cc/15s) i.e 152-192
+/// (cc/min).
+const INJECTOR_FLOW_RATE: u8 = 152;
 
 /// Struct that contains all processed engine parameters with their representative values.
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
@@ -91,11 +93,18 @@ pub struct EngineContext {
     /// habits relation to fuel consumption. Measured in (L/100km).
     pub instant_consumption: f64,
 
-    /// Cumulative distance measured in kilometres (km).
+    /// Cumulative distance measured in kilometres (km). This is for long-term fuel consumption
+    /// calculation and hence only calculates distance when car engine was running and vehicle
+    /// speed was greater than 0.
     pub cumulative_distance: f64,
 
-    /// Cumulative fuel usage measured in litres (L).
+    /// Cumulative fuel usage measured in litres (L). This is for long-term fuel consumption
+    /// calculation and hence only calculates fuel usage when car engine was running and vehicle
+    /// speed was greater than 0.
     pub cumulative_fuel: f64,
+
+    /// Total fuel used whenever car engine was running. Measured in litres (L).
+    pub total_fuel_used: f64,
 
     /// Long term fuel consumption based on distance, expressed in (L/100km).
     pub fuel_consumption: f64,
@@ -255,10 +264,13 @@ impl Default for SuzukiSdlViewer {
         // load up cumulative data from file if valid.
         let mut engine_context = EngineContext::default();
         let distance_fuel =
-            std::fs::read_to_string(DISTANCE_FUEL_FILE_PATH).unwrap_or("0.0,0.0".to_string());
-        let split: Vec<&str> = distance_fuel.split(",").collect();
-        engine_context.cumulative_distance = split[0].parse().unwrap_or(0.0);
-        engine_context.cumulative_fuel = split[1].parse().unwrap_or(0.0);
+            std::fs::read_to_string(DISTANCE_FUEL_FILE_PATH).unwrap_or("0,0,0".to_string());
+        let split: Vec<&str> = distance_fuel.trim().split(',').collect();
+
+        engine_context.cumulative_distance =
+            split.get(0).and_then(|v| v.parse().ok()).unwrap_or(0.0);
+        engine_context.cumulative_fuel = split.get(1).and_then(|v| v.parse().ok()).unwrap_or(0.0);
+        engine_context.total_fuel_used = split.get(2).and_then(|v| v.parse().ok()).unwrap_or(0.0);
 
         Self {
             port: vag_kkl.ok(),
@@ -472,11 +484,12 @@ impl SuzukiSdlViewer {
                                 instant_consumption =
                                     (fuel_flow_rate_litres_per_hour / vss) * 100.0;
                                 self.engine_context.cumulative_distance += distance_this_poll;
+                                self.engine_context.cumulative_fuel += fuel_this_poll;
                             } else {
                                 instant_consumption = 0.0;
                             }
+                            self.engine_context.total_fuel_used += fuel_this_poll;
                             self.engine_context.fuel_flow_rate = fuel_flow_rate_litres_per_hour;
-                            self.engine_context.cumulative_fuel += fuel_this_poll;
                             self.engine_context.instant_consumption = instant_consumption;
                             self.engine_context.fuel_consumption =
                                 if self.engine_context.cumulative_distance > 0.0 {
