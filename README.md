@@ -107,10 +107,6 @@ Oh did I tell you about how it messes up my immobilizer? Yeah I kinda have to wa
   This is just so I can see history code if any got popped up randomly, but then have it get cleared since it isn't valid anymore. Useful for intermittent issues that cause a code but then go away. Will let me know that a code was triggered and I can investigate.
 
   Fun thing that could be done: instead of adding buttons into dashboard and connect to pi, what if i setup listener to say, turn lights on and off quickly, say, 5 times so EL bool changes quickly, and then set a task that if EL changes 5 times in 5 seconds, run clear codes command or something XD such a stupid thing but i love the idea
-
-  ### Gear indicator
-
-  Use speed and rpm to show identified gear, when clutch pressed it'll just go down,but otherwise just a fun thing to add maybe
 </details>
 
 ## Building/Running
