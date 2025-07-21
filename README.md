@@ -43,7 +43,7 @@ Built with rust and [ratatui](https://ratatui.rs/).
 | Instant fuel consumption<sup>*</sup>   | Instantaneous fuel consumption at specific moment in time        | L/100km |
 | Long-term fuel consumption<sup>*</sup> | Long-term fuel consumption using only for moving car             | L/100km |
 
-Parameters marked <sup>*<sup> are not stable
+Parameters marked <sup>*</sup> are not stable
 
 <details>
   <summary>Not implemented</summary>
