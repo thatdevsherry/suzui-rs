@@ -7,7 +7,7 @@ use std::{
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, FromRepr};
 
-use crate::strings::DISTANCE_FUEL_FILE_PATH;
+use crate::strings::{DISTANCE_FUEL_FILE_PATH, VAG_KKL_PORT};
 
 #[derive(Debug)]
 pub struct ScanToolParameterValue {
@@ -243,7 +243,7 @@ pub struct SuzukiSdlViewer {
 
 impl Default for SuzukiSdlViewer {
     fn default() -> Self {
-        let vag_kkl = serialport::new("/dev/ttyUSB0", 7812)
+        let vag_kkl = serialport::new(VAG_KKL_PORT, 7812)
             .timeout(Duration::from_secs(1))
             .open_native();
         let mut raw_data: HashMap<ObdAddress, u8> = HashMap::new();
