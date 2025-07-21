@@ -108,12 +108,6 @@ Oh did I tell you about how it messes up my immobilizer? Yeah I kinda have to wa
 
   Fun thing that could be done: instead of adding buttons into dashboard and connect to pi, what if i setup listener to say, turn lights on and off quickly, say, 5 times so EL bool changes quickly, and then set a task that if EL changes 5 times in 5 seconds, run clear codes command or something XD such a stupid thing but i love the idea
 
-  ### Fuel economy (Instant or long-term)
-
-  If instant could be calculated, need to know injector fuel flow rate which I don't. Think I can then calculate using "inj. pw, RPM, VSS, fuel flow rate".
-
-  For long-term, would require writing to card. But instant fuel economy calculation is a pre-requisite.
-
   ### Gear indicator
 
   Use speed and rpm to show identified gear, when clutch pressed it'll just go down,but otherwise just a fun thing to add maybe
