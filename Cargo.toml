@@ -1,6 +1,6 @@
 [package]
 name = "suzui-rs"
-version = "2.0.1"
+version = "2.0.2"
 description = "Suzuki SDL protocol viewer"
 authors = ["Shehriyar Qureshi <thatdevsherry@gmail.com>"]
 license = "MIT"
