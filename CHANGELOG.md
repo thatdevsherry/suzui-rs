@@ -1,3 +1,14 @@
+## [2.0.2] - 2025-07-22
+
+### 🐛 Bug Fixes
+
+- *(toggle)* [**breaking**] Set initial state
+- *(sdl)* Show FC in first render
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump to v2.0.2
+- *(README)* Add reset trip in features
 ## [2.0.1] - 2025-07-22
 
 ### 🐛 Bug Fixes
@@ -11,6 +22,7 @@
 - *(README)* Add info about unstable params
 - *(README)* Remove fuel stuff from TODOs
 - *(README)* Remove gear indicator idea
+- Bump to v2.0.1
 ## [2.0.0] - 2025-07-21
 
 ### 🚀 Features
