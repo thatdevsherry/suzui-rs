@@ -42,6 +42,7 @@ Built with rust and [ratatui](https://ratatui.rs/).
 | Cumulative distance<sup>*</sup>        | Distance covered by car (odometer) until explicit reset (for long-term data)          | km  |
 | Instant fuel consumption<sup>*</sup>   | Instantaneous fuel consumption at that specific moment in time (use to analyze driving habits affect on fuel consumption)        | L/100km |
 | Long-term fuel consumption<sup>*</sup> | Long-term fuel consumption only when car was moving (idling will not pollute this data)             | L/100km |
+| Reset trip<sup>*</sup> | Toggle EL 5 times under 10 seconds to reset fuel data              | N/A |
 
 Parameters marked <sup>*</sup> are not stable
 
