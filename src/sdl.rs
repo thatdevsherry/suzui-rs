@@ -492,15 +492,15 @@ impl SuzukiSdlViewer {
                             self.engine_context.fuel_flow_rate = fuel_flow_rate_litres_per_hour;
                             self.engine_context.instant_consumption = instant_consumption;
                         }
-                        self.engine_context.fuel_consumption =
-                            if self.engine_context.cumulative_distance > 0.0 {
-                                (self.engine_context.cumulative_fuel
-                                    / self.engine_context.cumulative_distance)
-                                    * 100.0
-                            } else {
-                                0.0
-                            };
                     }
+                    self.engine_context.fuel_consumption =
+                        if self.engine_context.cumulative_distance > 0.0 {
+                            (self.engine_context.cumulative_fuel
+                                / self.engine_context.cumulative_distance)
+                                * 100.0
+                        } else {
+                            0.0
+                        };
                     self.engine_context.last_poll = Some(now);
                 }
                 ScanToolParameter::PspSwitch => {
