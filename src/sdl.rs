@@ -463,7 +463,7 @@ impl SuzukiSdlViewer {
                             let vss = self.engine_context.vehicle_speed as f64;
 
                             // calculate duty cycle
-                            let engine_cycle_time = 60_000f64 / (rpm * 2.0);
+                            let engine_cycle_time = 60_000f64 / rpm;
                             let duty_cycle = (inj_pw as f64) / engine_cycle_time;
 
                             // calculate fuel flow rate
