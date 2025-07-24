@@ -379,7 +379,7 @@ impl SuzukiSdlViewer {
                 ScanToolParameter::ThrottleAngle => {
                     let raw_value = self.raw_data.get(&ObdAddress::TpsAngle).unwrap();
                     let processed_value = (*raw_value as f32 * 63.0) / 128.0;
-                    self.engine_context.throttle_angle = processed_value as u8;
+                    self.engine_context.throttle_angle = processed_value.round() as u8;
                 }
                 ScanToolParameter::BatteryVoltage => {
                     let raw_value = self.raw_data.get(&ObdAddress::BatteryVoltage).unwrap();
@@ -398,9 +398,9 @@ impl SuzukiSdlViewer {
                     };
                     let processed_value = (*raw_value as f32 / 255.0) * 159.0 - 40.0;
                     if scan_tool_parameter == ScanToolParameter::CoolantTemp {
-                        self.engine_context.coolant_temp = processed_value as i8;
+                        self.engine_context.coolant_temp = processed_value.round() as i8;
                     } else {
-                        self.engine_context.intake_air_temperature = processed_value as i8;
+                        self.engine_context.intake_air_temperature = processed_value.round() as i8;
                     }
                 }
                 ScanToolParameter::InjPulseWidthCyl1 => {
@@ -435,7 +435,7 @@ impl SuzukiSdlViewer {
                 ScanToolParameter::AbsoluteThrottlePosition => {
                     let raw_value = self.raw_data.get(&ObdAddress::TpsVoltage).unwrap();
                     let processed_value = (*raw_value as f32 / 255.0) * 100.0;
-                    self.engine_context.absolute_throttle_position = processed_value as u8;
+                    self.engine_context.absolute_throttle_position = processed_value.round() as u8;
                 }
                 ScanToolParameter::VehicleSpeed => {
                     let raw_value = self.raw_data.get(&ObdAddress::VehicleSpeedSensor).unwrap();
@@ -445,14 +445,14 @@ impl SuzukiSdlViewer {
                 ScanToolParameter::IgnitionAdvance => {
                     let raw_value = self.raw_data.get(&ObdAddress::IgnitionAdvance).unwrap();
                     let processed_value = (*raw_value as f32 / 255.0) * (78.0 - (-12.0)) + (-12.0);
-                    self.engine_context.ignition_advance = processed_value as i8;
+                    self.engine_context.ignition_advance = processed_value.round() as i8;
                 }
                 ScanToolParameter::CalculatedLoad => {
                     let iat = self.engine_context.intake_air_temperature;
                     let map = self.engine_context.manifold_absolute_pressure;
                     let baro = self.engine_context.barometric_pressure;
                     let processed_value = (map / baro) * (293.15 / (iat as f32 + 273.15)) * 100.0;
-                    self.engine_context.calculated_load = processed_value as u8;
+                    self.engine_context.calculated_load = processed_value.round() as u8;
                 }
                 ScanToolParameter::FuelConsumption => {
                     let now = Instant::now();
