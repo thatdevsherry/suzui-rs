@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.4] - 2025-07-24
+
+### 🐛 Bug Fixes
+
+- *(sdl)* Round up floats that cast to {u,i}8
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump to v2.0.4
+
 ## [2.0.3] - 2025-07-23
 
 ### 🐛 Bug Fixes
@@ -11,6 +21,7 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - *(github)* Remove dependabot
+- Bump to v2.0.3
 
 ## [2.0.2] - 2025-07-22
 
