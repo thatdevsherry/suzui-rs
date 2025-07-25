@@ -37,14 +37,15 @@ Built with rust and [ratatui](https://ratatui.rs/).
 | PSP                        | Power steering pump switch                                       | ON/OFF  |
 | RAD                        | Radiator fan                                                     | ON/OFF  |
 | Fuel cut                   | Deceleration fuel cut off (DFCO). Calc. from inj. pw             | ON/OFF  |
+| Instant fuel use<sup>*</sup>            | Instantaneous fuel use (helpful to see fuel use e.g. when idling, ac on vs off etc)          | L/hr  |
 | Total fuel used<sup>*</sup>            | Track total fuel used until explicit reset (idea is to be near actual fuel filled when filling to FULL)          | L  |
 | Cumulative fuel<sup>*</sup>            | Fuel used when engine running and vehicle moving (for long-term data)                 | L  |
 | Cumulative distance<sup>*</sup>        | Distance covered by car (odometer) until explicit reset (for long-term data)          | km  |
 | Instant fuel consumption<sup>*</sup>   | Instantaneous fuel consumption at that specific moment in time (use to analyze driving habits affect on fuel consumption)        | L/100km |
 | Long-term fuel consumption<sup>*</sup> | Long-term fuel consumption only when car was moving (idling will not pollute this data)             | L/100km |
-| Reset trip<sup>*</sup> | Toggle EL 5 times under 10 seconds to reset fuel data              | N/A |
+| Reset trip<sup>*</sup> | Toggle EL 5 times under 10 seconds to reset trip data              | N/A |
 
-Parameters marked <sup>*</sup> are not stable
+**Parameters marked <sup>*</sup> are not stable**
 
 <details>
   <summary>Not implemented</summary>
