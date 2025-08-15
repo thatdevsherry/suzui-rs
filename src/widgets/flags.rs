@@ -73,7 +73,7 @@ impl Widget for FlagsBlock {
             .bg(if self.psp { Color::Green } else { Color::Black })
             .centered()
             .render(flags_layout_split[2], buf);
-        Paragraph::new("R/F")
+        Paragraph::new("RAD")
             .white()
             .bold()
             .bg(if self.rad_fan {

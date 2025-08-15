@@ -2,8 +2,10 @@ use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ToggleDetector {
+    // last saved state.
     last_state: Option<bool>,
     toggle_count: u8,
+    // time of first toggle in current sequence.
     first_toggle_time: Option<Instant>,
     required_toggles: u8,
     time_window: Duration,
@@ -15,7 +17,7 @@ impl ToggleDetector {
             last_state: None,
             toggle_count: 0,
             first_toggle_time: None,
-            required_toggles: 5,
+            required_toggles: 6,
             time_window: Duration::from_secs(10),
         }
     }
@@ -43,7 +45,6 @@ impl ToggleDetector {
                 // Window expired - start completely fresh
                 self.reset_detector();
                 self.first_toggle_time = Some(now);
-                self.toggle_count = 0;
             }
         } else if let Some(first_time) = self.first_toggle_time {
             if Instant::now().duration_since(first_time) > self.time_window {

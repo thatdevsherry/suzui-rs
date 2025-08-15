@@ -90,6 +90,8 @@ impl App {
         while self.running {
             self.sdl_viewer.update_raw_data(should_simulate);
 
+            self.sdl_viewer.update_processed_data();
+
             // Trip meter reset logic
             if self
                 .trip_reset_detector
@@ -99,7 +101,6 @@ impl App {
                 self.last_write = Instant::now();
             }
 
-            self.sdl_viewer.update_processed_data();
 
             // Write to file
             if self.last_write.elapsed() > Duration::from_secs(15) {
