@@ -45,14 +45,14 @@ impl Widget for ElectricalBlock {
         let battery_color = match self.rpm {
             rpm if rpm > 0 => match self.battery_voltage {
                 batt_volt if !(13.1..=15.2).contains(&batt_volt) => (Color::Red, Color::White),
-                _ => (Color::Black, Color::Green),
+                _ => (Color::Black, Color::White),
             },
             _ => match self.battery_voltage {
                 batt_volt if batt_volt <= 12.2 || batt_volt > 13.1 => (Color::Red, Color::White),
                 batt_volt if batt_volt < 12.4 || (batt_volt > 12.8 && batt_volt <= 13.1) => {
                     (Color::Black, Color::LightYellow)
                 }
-                batt_volt if (12.4..=12.8).contains(&batt_volt) => (Color::Black, Color::Green),
+                batt_volt if (12.4..=12.8).contains(&batt_volt) => (Color::Black, Color::White),
                 _ => (Color::Black, Color::Red),
             },
         };

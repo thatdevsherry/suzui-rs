@@ -61,18 +61,18 @@ impl StatefulWidget for AirflowBlock {
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Length(1), // block hdr
+                Constraint::Length(5), // load
                 Constraint::Length(1), // map + baro
-                Constraint::Length(1), // load
                 Constraint::Length(1), // block ftr
             ])
             .split(area.inner(Margin::new(1, 0)));
         Span::styled(
-            format!("MAP: {:.2} ({:.2})", self.map, self.baro),
+            format!("MAP: {} ({})", self.map.round(), self.baro.round()),
             Style::default()
                 .fg(Color::White)
                 .add_modifier(Modifier::BOLD),
         )
-        .render(airflow_layout[1], buf);
+        .render(airflow_layout[2], buf);
 
         // doing this as load can go over 100% in certain cases.
         let calc_load_min = 0;
@@ -125,6 +125,6 @@ impl StatefulWidget for AirflowBlock {
                     .bg(Color::Black)
                     .add_modifier(Modifier::BOLD),
             ))
-            .render(airflow_layout[2], buf);
+            .render(airflow_layout[1], buf);
     }
 }

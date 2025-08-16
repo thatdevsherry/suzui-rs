@@ -41,7 +41,7 @@ impl Widget for ThrottleBlock {
             .direction(Direction::Vertical)
             .constraints(vec![
                 Constraint::Length(1), // block hdr
-                Constraint::Length(5), // throttle
+                Constraint::Length(1), // throttle
                 Constraint::Length(1), // block ftr
             ])
             .split(area.inner(Margin::new(1, 0)));

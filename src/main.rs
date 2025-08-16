@@ -154,8 +154,8 @@ impl App {
         let right = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
-                Constraint::Length(7), // throttle
-                Constraint::Length(4), // load
+                Constraint::Length(8), // load
+                Constraint::Length(3), // throttle
                 Constraint::Length(3), // electrical
                 Constraint::Length(4), // vehicle
                 Constraint::Length(3), // flags
@@ -165,8 +165,8 @@ impl App {
         frame.render_widget(engine_speed_block, left[0]);
         frame.render_widget(fuel_ignition_block, left[1]);
         frame.render_stateful_widget(temperature_block, left[2], &mut self.temperature_state);
-        frame.render_widget(throttle_block, right[0]);
-        frame.render_stateful_widget(airflow_block, right[1], &mut self.airflow_state);
+        frame.render_stateful_widget(airflow_block, right[0], &mut self.airflow_state);
+        frame.render_widget(throttle_block, right[1]);
         frame.render_widget(electrical_block, right[2]);
         frame.render_widget(vehicle_block, right[3]);
         frame.render_widget(flags_block, right[4]);

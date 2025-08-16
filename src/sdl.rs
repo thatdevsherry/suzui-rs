@@ -361,30 +361,26 @@ impl SuzukiSdlViewer {
             match scan_tool_parameter {
                 ScanToolParameter::DesiredIdle => {
                     let raw_value = self.raw_data.get(&ObdAddress::TargetIdle).unwrap();
-                    let processed_value = *raw_value as f32 * 7.84375;
-                    self.engine_context.desired_idle = processed_value.round() as u16;
+                    self.engine_context.desired_idle = Self::calculate_desired_idle(*raw_value);
                 }
                 ScanToolParameter::EngineSpeed => {
                     let low_byte = self.raw_data.get(&ObdAddress::RpmLow).unwrap();
                     let high_byte = self.raw_data.get(&ObdAddress::RpmHigh).unwrap();
-                    let processed_value =
-                        (((*high_byte as u16) << 8) | *low_byte as u16) as f32 / 5.1;
-                    self.engine_context.engine_speed = processed_value.round() as u16;
+                    self.engine_context.engine_speed =
+                        Self::calculate_rpm_high(*high_byte) + Self::calculate_rpm_low(*low_byte);
                 }
                 ScanToolParameter::IacFlowDutyCycle => {
                     let raw_value = self.raw_data.get(&ObdAddress::IscFlowDuty).unwrap();
-                    let processed_value = (*raw_value as f32 / 255.0) * 100.0;
-                    self.engine_context.isc_flow_duty = processed_value.round() as u8;
+                    self.engine_context.isc_flow_duty = Self::calculate_isc_flow_duty(*raw_value);
                 }
                 ScanToolParameter::ThrottleAngle => {
                     let raw_value = self.raw_data.get(&ObdAddress::TpsAngle).unwrap();
-                    let processed_value = (*raw_value as f32 * 125.0) / 255.0;
-                    self.engine_context.throttle_angle = processed_value.round() as u8;
+                    self.engine_context.throttle_angle = Self::calculate_tps_angle(*raw_value);
                 }
                 ScanToolParameter::BatteryVoltage => {
                     let raw_value = self.raw_data.get(&ObdAddress::BatteryVoltage).unwrap();
-                    let processed_value = *raw_value as f32 * 0.0787;
-                    self.engine_context.battery_voltage = processed_value;
+                    self.engine_context.battery_voltage =
+                        Self::calculate_battery_voltage(*raw_value);
                 }
                 ScanToolParameter::CoolantTemp | ScanToolParameter::IntakeAirTemp => {
                     let raw_value = if scan_tool_parameter == ScanToolParameter::CoolantTemp {
@@ -396,11 +392,11 @@ impl SuzukiSdlViewer {
                             .get(&ObdAddress::IntakeAirTemperature)
                             .unwrap()
                     };
-                    let processed_value = (*raw_value as f32 / 255.0) * 159.0 - 40.0;
+                    let processed_value = Self::calculate_temps(*raw_value);
                     if scan_tool_parameter == ScanToolParameter::CoolantTemp {
-                        self.engine_context.coolant_temp = processed_value.round() as i8;
+                        self.engine_context.coolant_temp = processed_value;
                     } else {
-                        self.engine_context.intake_air_temperature = processed_value.round() as i8;
+                        self.engine_context.intake_air_temperature = processed_value;
                     }
                 }
                 ScanToolParameter::InjPulseWidthCyl1 => {
@@ -412,9 +408,9 @@ impl SuzukiSdlViewer {
                         .raw_data
                         .get(&ObdAddress::InjectorPulseWidthHigh)
                         .unwrap();
-                    let processed_value =
-                        (((*high_byte as u16) << 8) | *low_byte as u16) as f32 * 0.002;
-                    self.engine_context.injector_pulse_width_cyl_1 = processed_value;
+                    self.engine_context.injector_pulse_width_cyl_1 =
+                        Self::calculate_inj_pw_high(*high_byte)
+                            + Self::calculate_inj_pw_low(*low_byte);
                 }
                 ScanToolParameter::Map | ScanToolParameter::BarometricPressure => {
                     let raw_value = if scan_tool_parameter == ScanToolParameter::Map {
@@ -424,8 +420,7 @@ impl SuzukiSdlViewer {
                     } else {
                         self.raw_data.get(&ObdAddress::BarometricPressure).unwrap()
                     };
-                    let processed_value =
-                        (*raw_value as f32 / 255.0) * (146.63 - (-20.0)) + (-20.0);
+                    let processed_value = Self::calculate_pressure(*raw_value);
                     if scan_tool_parameter == ScanToolParameter::Map {
                         self.engine_context.manifold_absolute_pressure = processed_value;
                     } else {
@@ -444,8 +439,8 @@ impl SuzukiSdlViewer {
                 }
                 ScanToolParameter::IgnitionAdvance => {
                     let raw_value = self.raw_data.get(&ObdAddress::IgnitionAdvance).unwrap();
-                    let processed_value = (*raw_value as f32 / 255.0) * (78.0 - (-12.0)) + (-12.0);
-                    self.engine_context.ignition_advance = processed_value.round() as i8;
+                    let processed_value = Self::calculate_ignition_advance(*raw_value);
+                    self.engine_context.ignition_advance = processed_value;
                 }
                 ScanToolParameter::CalculatedLoad => {
                     let iat = self.engine_context.intake_air_temperature;
@@ -505,28 +500,24 @@ impl SuzukiSdlViewer {
                 }
                 ScanToolParameter::PspSwitch => {
                     let raw_value = self.raw_data.get(&ObdAddress::StatusFlags).unwrap();
-                    let processed_value = if raw_value & (1 << 1) != 0 { 1 } else { 0 };
-                    self.engine_context.psp_switch = processed_value == 1;
+                    self.engine_context.psp_switch = Self::calculate_psp_flag(*raw_value);
                 }
                 ScanToolParameter::AcSwitch => {
                     let raw_value = self.raw_data.get(&ObdAddress::StatusFlags).unwrap();
-                    let processed_value = if raw_value & (1 << 2) != 0 { 1 } else { 0 };
-                    self.engine_context.ac_switch = processed_value == 1;
+                    self.engine_context.ac_switch = Self::calculate_ac_flag(*raw_value);
                 }
                 ScanToolParameter::ClosedThrottlePos => {
                     let raw_value = self.raw_data.get(&ObdAddress::StatusFlags).unwrap();
-                    let processed_value = if raw_value & (1 << 4) != 0 { 1 } else { 0 };
-                    self.engine_context.closed_throttle_position = processed_value == 1;
+                    self.engine_context.closed_throttle_position =
+                        Self::calculate_ctp_flag(*raw_value);
                 }
                 ScanToolParameter::ElectricLoad => {
                     let raw_value = self.raw_data.get(&ObdAddress::StatusFlags).unwrap();
-                    let processed_value = if raw_value & (1 << 6) != 0 { 1 } else { 0 };
-                    self.engine_context.electric_load = processed_value == 1;
+                    self.engine_context.electric_load = Self::calculate_el_flag(*raw_value);
                 }
                 ScanToolParameter::RadiatorFan => {
                     let raw_value = self.raw_data.get(&ObdAddress::RadiatorFan).unwrap();
-                    let processed_value = if *raw_value == 128 { 1 } else { 0 };
-                    self.engine_context.radiator_fan = processed_value == 1;
+                    self.engine_context.radiator_fan = Self::calculate_rad_flag(*raw_value);
                 }
                 ScanToolParameter::FuelCut => {
                     let low_byte = self
@@ -548,5 +539,314 @@ impl SuzukiSdlViewer {
     pub fn connect(&mut self) {
         let ecu_id = self.get_ecu_id();
         self.ecu_id = Some(ecu_id);
+    }
+
+    fn calculate_tps_angle(raw: u8) -> u8 {
+        let processed_value = (raw as f32 * 125.0) / 255.0;
+        processed_value.round() as u8
+    }
+
+    fn calculate_rpm_high(raw: u8) -> u16 {
+        let processed_value = (((raw as u16) << 8) | 0u16) as f32 / 5.1;
+        processed_value.round() as u16
+    }
+
+    fn calculate_rpm_low(raw: u8) -> u16 {
+        let processed_value = (((0u16) << 8) | raw as u16) as f32 / 5.1;
+        processed_value.round() as u16
+    }
+
+    fn calculate_desired_idle(raw: u8) -> u16 {
+        let processed_value = raw as f32 * 7.84375;
+        processed_value.round() as u16
+    }
+
+    fn calculate_temps(raw: u8) -> i8 {
+        let processed_value = (raw as f32 * 160.0 / 255.0) - 40.0;
+        processed_value.round() as i8
+    }
+
+    fn calculate_inj_pw_high(raw: u8) -> f32 {
+        (((raw as u16) << 8) | 0u16) as f32 * 0.002
+    }
+
+    fn calculate_inj_pw_low(raw: u8) -> f32 {
+        (((0u16) << 8) | raw as u16) as f32 * 0.002
+    }
+
+    fn calculate_ignition_advance(raw: u8) -> i8 {
+        let processed_value = (raw as f32 / 255.0) * (78.0 - (-12.0)) + (-12.0);
+        processed_value.round() as i8
+    }
+
+    fn calculate_pressure(raw: u8) -> f32 {
+        (raw as f32 / 255.0) * (146.63 - (-20.0)) + (-20.0)
+    }
+
+    fn calculate_ac_flag(raw: u8) -> bool {
+        let processed_value = if raw & (1 << 2) != 0 { 1 } else { 0 };
+        processed_value == 1
+    }
+    fn calculate_ctp_flag(raw: u8) -> bool {
+        let processed_value = if raw & (1 << 4) != 0 { 1 } else { 0 };
+        processed_value == 1
+    }
+    fn calculate_psp_flag(raw: u8) -> bool {
+        let processed_value = if raw & (1 << 1) != 0 { 1 } else { 0 };
+        processed_value == 1
+    }
+    fn calculate_el_flag(raw: u8) -> bool {
+        let processed_value = if raw & (1 << 6) != 0 { 1 } else { 0 };
+        processed_value == 1
+    }
+    fn calculate_rad_flag(raw: u8) -> bool {
+        let processed_value = if raw == 128 { 1 } else { 0 };
+        processed_value == 1
+    }
+    fn calculate_isc_flow_duty(raw: u8) -> u8 {
+        let processed_value = (raw as f32 / 255.0) * 100.0;
+        processed_value.round() as u8
+    }
+    fn calculate_battery_voltage(raw: u8) -> f32 {
+        raw as f32 * 0.0787
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use crate::sdl::SuzukiSdlViewer;
+
+    #[test]
+    fn test_rpm_high() {
+        let inputs: HashMap<u8, u16> = HashMap::from([
+            (0, 0),
+            (1, 50),
+            (32, 1606),
+            (64, 3213),
+            (96, 4819),
+            (128, 6425),
+            (160, 8031),
+            (192, 9638),
+            (224, 11244),
+            (255, 12800),
+        ]);
+        for (key, value) in inputs {
+            assert_eq!(SuzukiSdlViewer::calculate_rpm_high(key), value)
+        }
+    }
+
+    #[test]
+    fn test_rpm_low() {
+        let inputs: HashMap<u8, u16> = HashMap::from([
+            (0, 0),
+            (1, 0),
+            (32, 6),
+            (64, 13),
+            (96, 19),
+            (128, 25),
+            (160, 31),
+            (192, 38),
+            (224, 44),
+            (255, 50),
+        ]);
+        for (key, value) in inputs {
+            assert_eq!(SuzukiSdlViewer::calculate_rpm_low(key), value)
+        }
+    }
+
+    #[test]
+    fn test_desired_idle() {
+        let inputs: HashMap<u8, u16> = HashMap::from([
+            (0, 0),
+            (1, 8),
+            (32, 251),
+            (64, 502),
+            (96, 753),
+            (128, 1004),
+            (160, 1255),
+            (192, 1506),
+            (224, 1757),
+            (255, 2000),
+        ]);
+        for (key, value) in inputs {
+            assert_eq!(SuzukiSdlViewer::calculate_desired_idle(key), value)
+        }
+    }
+
+    #[test]
+    fn test_temps() {
+        let inputs: HashMap<u8, i8> = HashMap::from([
+            (0, -40),
+            (1, -39),
+            (32, -20),
+            (64, 0),
+            (96, 20),
+            (128, 40),
+            (160, 60),
+            (192, 80),
+            (224, 101),
+            (255, 120),
+        ]);
+        for (key, value) in inputs {
+            assert_eq!(SuzukiSdlViewer::calculate_temps(key), value)
+        }
+    }
+
+    #[test]
+    fn test_tps_angle() {
+        let inputs: HashMap<u8, u8> = HashMap::from([
+            (0, 0),
+            (1, 0),
+            (32, 16),
+            (64, 31),
+            (96, 47),
+            (128, 63),
+            (160, 78),
+            (192, 94),
+            (224, 110),
+            (255, 125),
+        ]);
+        for (key, value) in inputs {
+            assert_eq!(SuzukiSdlViewer::calculate_tps_angle(key), value)
+        }
+    }
+
+    #[test]
+    fn test_inj_pw_high() {
+        let inputs: HashMap<u8, &str> = HashMap::from([
+            (0, "0.000"),
+            (1, "0.512"),
+            (32, "16.384"),
+            (64, "32.768"),
+            (96, "49.152"),
+            (128, "65.536"),
+            (160, "81.920"),
+            (192, "98.304"),
+            (224, "114.688"),
+            (255, "130.560"),
+        ]);
+        for (key, value) in inputs {
+            assert_eq!(
+                format!("{:.3}", SuzukiSdlViewer::calculate_inj_pw_high(key)),
+                value
+            )
+        }
+    }
+
+    #[test]
+    fn test_inj_pw_low() {
+        let inputs: HashMap<u8, &str> = HashMap::from([
+            (0, "0.000"),
+            (1, "0.002"),
+            (32, "0.064"),
+            (64, "0.128"),
+            (96, "0.192"),
+            (128, "0.256"),
+            (160, "0.320"),
+            (192, "0.384"),
+            (224, "0.448"),
+            (255, "0.510"),
+        ]);
+        for (key, value) in inputs {
+            assert_eq!(
+                format!("{:.3}", SuzukiSdlViewer::calculate_inj_pw_low(key)),
+                value
+            )
+        }
+    }
+
+    #[test]
+    fn test_ignition_advance() {
+        let inputs: HashMap<u8, i8> = HashMap::from([
+            (0, -12),
+            (1, -12),
+            (32, -1),
+            (64, 11),
+            (96, 22),
+            (128, 33),
+            (160, 44),
+            (192, 56),
+            (224, 67),
+            (255, 78),
+        ]);
+        for (key, value) in inputs {
+            assert_eq!(SuzukiSdlViewer::calculate_ignition_advance(key), value)
+        }
+    }
+
+    #[test]
+    fn test_pressure() {
+        let inputs: HashMap<u8, i16> = HashMap::from([
+            (0, -20),
+            (1, -19),
+            (32, 1),
+            (64, 22),
+            (96, 43),
+            (128, 64),
+            (160, 85),
+            (192, 105),
+            (224, 126),
+            (255, 147),
+        ]);
+        for (key, value) in inputs {
+            assert_eq!(
+                SuzukiSdlViewer::calculate_pressure(key).round() as i16,
+                value
+            )
+        }
+    }
+
+    #[test]
+    fn test_isc_flow_duty() {
+        assert_eq!(SuzukiSdlViewer::calculate_isc_flow_duty(0), 0);
+        assert_eq!(SuzukiSdlViewer::calculate_isc_flow_duty(128), 50);
+        assert_eq!(SuzukiSdlViewer::calculate_isc_flow_duty(255), 100);
+    }
+
+    #[test]
+    fn test_battery_voltage() {
+        assert_eq!(SuzukiSdlViewer::calculate_battery_voltage(0).round(), 0.0);
+        assert_eq!(
+            SuzukiSdlViewer::calculate_battery_voltage(128).round(),
+            10.0
+        );
+        assert_eq!(
+            SuzukiSdlViewer::calculate_battery_voltage(255).round(),
+            20.0
+        );
+    }
+
+    #[test]
+    fn test_rad_flag() {
+        let inputs: HashMap<u8, bool> = HashMap::from([(0, false), (128, true)]);
+
+        for (key, value) in inputs {
+            assert_eq!(SuzukiSdlViewer::calculate_rad_flag(key), value)
+        }
+    }
+
+    #[test]
+    fn test_status_flags() {
+        let inputs = vec![1, 2, 4, 8, 16, 32, 64];
+        for input in inputs {
+            assert_eq!(
+                SuzukiSdlViewer::calculate_ctp_flag(input),
+                if input == 16 { true } else { false }
+            );
+            assert_eq!(
+                SuzukiSdlViewer::calculate_el_flag(input),
+                if input == 64 { true } else { false }
+            );
+            assert_eq!(
+                SuzukiSdlViewer::calculate_ac_flag(input),
+                if input == 4 { true } else { false }
+            );
+            assert_eq!(
+                SuzukiSdlViewer::calculate_psp_flag(input),
+                if input == 2 { true } else { false }
+            );
+        }
     }
 }

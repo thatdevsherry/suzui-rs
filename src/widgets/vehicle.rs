@@ -56,9 +56,7 @@ impl Widget for VehicleBlock {
             .constraints(vec![Constraint::Percentage(100), Constraint::Length(5)])
             .split(speed_block[2]);
         let speed_color = match self.speed {
-            speed if speed < 60 => (Color::Black, Color::White),
-            speed if speed <= 80 => (Color::Black, Color::Green),
-            speed if speed <= 110 => (Color::Black, Color::LightYellow),
+            speed if speed <= 120 => (Color::Black, Color::White),
             _ => (Color::Red, Color::White),
         };
         let speed = Paragraph::new(self.speed.to_string())
