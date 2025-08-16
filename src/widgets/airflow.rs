@@ -86,7 +86,7 @@ impl StatefulWidget for AirflowBlock {
                 * 100.0) as u16
         };
         let gauge_color = match self.rpm {
-            rpm if rpm < 2000 && self.calc_load >= 85 => {
+            rpm if rpm < 2500 && self.calc_load >= 85 => {
                 let color;
                 if state.last_blink.is_some() {
                     if Instant::now().duration_since(state.last_blink.unwrap())
