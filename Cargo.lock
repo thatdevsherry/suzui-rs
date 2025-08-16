@@ -801,7 +801,7 @@ dependencies = [
 
 [[package]]
 name = "suzui-rs"
-version = "2.1.2"
+version = "2.1.3"
 dependencies = [
  "clap",
  "color-eyre",
