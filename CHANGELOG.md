@@ -1,3 +1,15 @@
+## [2.1.0] - 2025-08-16
+
+### 🚀 Features
+
+- Red color load > 85 and < 2000 rpm
+- Stateful red blinkies
+
+### ⚙️ Miscellaneous Tasks
+
+- Changelog 2.0.5
+- Format main.rs
+- Bump to 2.1.0
 ## [2.0.5] - 2025-08-15
 
 ### 🚀 Features
