@@ -1,3 +1,14 @@
+## [2.1.3] - 2025-08-16
+
+### 🐛 Bug Fixes
+
+- Lugging min rpm to 2500
+
+### ⚙️ Miscellaneous Tasks
+
+- Update changelog
+- Remove unstable mark for reset trip
+- Bump to v2.1.3
 ## [2.1.2] - 2025-08-16
 
 ### 🚀 Features
