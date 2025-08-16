@@ -101,7 +101,6 @@ impl App {
                 self.last_write = Instant::now();
             }
 
-
             // Write to file
             if self.last_write.elapsed() > Duration::from_secs(15) {
                 self.persistence_write()?;
