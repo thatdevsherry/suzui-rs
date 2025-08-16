@@ -1,3 +1,5 @@
+use std::time::{Duration, Instant};
+
 use ratatui::{
     prelude::*,
     widgets::{Block, Borders, Gauge},
@@ -26,6 +28,16 @@ impl AirflowBlock {
 #[derive(Debug)]
 pub struct AirflowBlockState {
     pub is_red: bool,
+    pub last_blink: Option<Instant>,
+}
+
+impl AirflowBlockState {
+    pub fn new() -> Self {
+        Self {
+            is_red: false,
+            last_blink: None,
+        }
+    }
 }
 
 impl StatefulWidget for AirflowBlock {
@@ -76,12 +88,28 @@ impl StatefulWidget for AirflowBlock {
         let gauge_color = match self.rpm {
             rpm if rpm < 2000 && self.calc_load >= 85 => {
                 let color;
-                if state.is_red {
-                    state.is_red = false;
-                    color = Color::Black;
+                if state.last_blink.is_some() {
+                    if Instant::now().duration_since(state.last_blink.unwrap())
+                        > Duration::from_millis(500)
+                    {
+                        color = if state.is_red {
+                            Color::Black
+                        } else {
+                            Color::Red
+                        };
+                        state.is_red = !state.is_red;
+                        state.last_blink = Some(Instant::now());
+                    } else {
+                        color = if state.is_red {
+                            Color::Red
+                        } else {
+                            Color::Black
+                        };
+                    }
                 } else {
+                    state.last_blink = Some(Instant::now());
                     state.is_red = true;
-                    color = Color::Red;
+                    color = Color::Red
                 }
                 color
             }

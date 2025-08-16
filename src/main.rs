@@ -65,7 +65,7 @@ impl App {
             sdl_viewer: SuzukiSdlViewer::default(),
             last_write: Instant::now(),
             trip_reset_detector: ToggleDetector::default(),
-            airflow_state: AirflowBlockState { is_red: false },
+            airflow_state: AirflowBlockState::new(),
             temperature_state: TemperatureState::new(),
         }
     }

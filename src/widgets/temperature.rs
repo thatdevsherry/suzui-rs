@@ -1,3 +1,5 @@
+use std::time::{Duration, Instant};
+
 use ratatui::{
     prelude::*,
     widgets::{Block, Borders, Gauge},
@@ -8,14 +10,18 @@ use crate::sdl::EngineContext;
 #[derive(Debug)]
 pub struct TemperatureState {
     is_iat_red: bool,
+    iat_last_blink: Option<Instant>,
     is_ect_red: bool,
+    ect_last_blink: Option<Instant>,
 }
 
 impl TemperatureState {
     pub fn new() -> Self {
         Self {
             is_iat_red: false,
+            iat_last_blink: None,
             is_ect_red: false,
+            ect_last_blink: None,
         }
     }
 }
@@ -108,10 +114,26 @@ impl StatefulWidget for TemperatureBlock {
             temp if temp < 110 => Color::LightYellow,
             _ => {
                 let color;
-                if state.is_ect_red {
-                    state.is_ect_red = false;
-                    color = Color::Black
+                if state.ect_last_blink.is_some() {
+                    if Instant::now().duration_since(state.ect_last_blink.unwrap())
+                        > Duration::from_millis(500)
+                    {
+                        color = if state.is_ect_red {
+                            Color::Black
+                        } else {
+                            Color::Red
+                        };
+                        state.is_ect_red = !state.is_ect_red;
+                        state.ect_last_blink = Some(Instant::now());
+                    } else {
+                        color = if state.is_ect_red {
+                            Color::Red
+                        } else {
+                            Color::Black
+                        };
+                    }
                 } else {
+                    state.ect_last_blink = Some(Instant::now());
                     state.is_ect_red = true;
                     color = Color::Red
                 }
@@ -152,12 +174,28 @@ impl StatefulWidget for TemperatureBlock {
             iat if iat < 70 => Color::Yellow,
             _ => {
                 let color;
-                if state.is_iat_red {
-                    state.is_iat_red = false;
-                    color = Color::Black
+                if state.iat_last_blink.is_some() {
+                    if Instant::now().duration_since(state.iat_last_blink.unwrap())
+                        > Duration::from_millis(500)
+                    {
+                        color = if state.is_iat_red {
+                            Color::Black
+                        } else {
+                            Color::Red
+                        };
+                        state.is_iat_red = !state.is_iat_red;
+                        state.iat_last_blink = Some(Instant::now());
+                    } else {
+                        color = if state.is_iat_red {
+                            Color::Red
+                        } else {
+                            Color::Black
+                        };
+                    }
                 } else {
+                    state.iat_last_blink = Some(Instant::now());
                     state.is_iat_red = true;
-                    color = Color::Red;
+                    color = Color::Red
                 }
                 color
             }
