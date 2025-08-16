@@ -23,8 +23,15 @@ impl AirflowBlock {
     }
 }
 
-impl Widget for AirflowBlock {
-    fn render(self, area: Rect, buf: &mut ratatui::prelude::Buffer)
+#[derive(Debug)]
+pub struct AirflowBlockState {
+    pub is_red: bool,
+}
+
+impl StatefulWidget for AirflowBlock {
+    type State = AirflowBlockState;
+
+    fn render(self, area: Rect, buf: &mut ratatui::prelude::Buffer, state: &mut Self::State)
     where
         Self: Sized,
     {
@@ -67,7 +74,17 @@ impl Widget for AirflowBlock {
                 * 100.0) as u16
         };
         let gauge_color = match self.rpm {
-            rpm if rpm < 2000 && self.calc_load >= 85 => Color::Red,
+            rpm if rpm < 2000 && self.calc_load >= 85 => {
+                let color;
+                if state.is_red {
+                    state.is_red = false;
+                    color = Color::Black;
+                } else {
+                    state.is_red = true;
+                    color = Color::Red;
+                }
+                color
+            }
             _ => Color::White,
         };
         Gauge::default()

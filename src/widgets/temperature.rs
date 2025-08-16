@@ -5,6 +5,21 @@ use ratatui::{
 
 use crate::sdl::EngineContext;
 
+#[derive(Debug)]
+pub struct TemperatureState {
+    is_iat_red: bool,
+    is_ect_red: bool,
+}
+
+impl TemperatureState {
+    pub fn new() -> Self {
+        Self {
+            is_iat_red: false,
+            is_ect_red: false,
+        }
+    }
+}
+
 pub struct TemperatureBlock {
     coolant: i8,
     intake: i8,
@@ -19,8 +34,10 @@ impl TemperatureBlock {
     }
 }
 
-impl Widget for TemperatureBlock {
-    fn render(self, area: Rect, buf: &mut ratatui::prelude::Buffer)
+impl StatefulWidget for TemperatureBlock {
+    type State = TemperatureState;
+
+    fn render(self, area: Rect, buf: &mut ratatui::prelude::Buffer, state: &mut Self::State)
     where
         Self: Sized,
     {
@@ -89,7 +106,17 @@ impl Widget for TemperatureBlock {
             temp if temp < 85 => Color::Blue,
             temp if temp < 101 => Color::Green,
             temp if temp < 110 => Color::LightYellow,
-            _ => Color::Red,
+            _ => {
+                let color;
+                if state.is_ect_red {
+                    state.is_ect_red = false;
+                    color = Color::Black
+                } else {
+                    state.is_ect_red = true;
+                    color = Color::Red
+                }
+                color
+            }
         };
         Gauge::default()
             .percent(coolant_percentage)
@@ -123,7 +150,17 @@ impl Widget for TemperatureBlock {
             iat if iat < 20 => Color::Blue,
             iat if iat < 50 => Color::Green,
             iat if iat < 70 => Color::Yellow,
-            _ => Color::Red,
+            _ => {
+                let color;
+                if state.is_iat_red {
+                    state.is_iat_red = false;
+                    color = Color::Black
+                } else {
+                    state.is_iat_red = true;
+                    color = Color::Red;
+                }
+                color
+            }
         };
         Gauge::default()
             .percent(intake_percentage)
