@@ -1,3 +1,17 @@
+## [2.1.2] - 2025-08-16
+
+### 🚀 Features
+
+- Improvements
+
+### 🐛 Bug Fixes
+
+- Tps angle accuracy
+
+### ⚙️ Miscellaneous Tasks
+
+- Update changelog
+- Bump to v2.1.2
 ## [2.1.1] - 2025-08-16
 
 ### 🐛 Bug Fixes
