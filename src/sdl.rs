@@ -378,7 +378,7 @@ impl SuzukiSdlViewer {
                 }
                 ScanToolParameter::ThrottleAngle => {
                     let raw_value = self.raw_data.get(&ObdAddress::TpsAngle).unwrap();
-                    let processed_value = (*raw_value as f32 * 63.0) / 128.0;
+                    let processed_value = (*raw_value as f32 * 125.0) / 255.0;
                     self.engine_context.throttle_angle = processed_value.round() as u8;
                 }
                 ScanToolParameter::BatteryVoltage => {
