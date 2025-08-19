@@ -563,7 +563,7 @@ impl SuzukiSdlViewer {
 
     fn calculate_temps(raw: u8) -> i8 {
         let processed_value = (raw as f32 * 160.0 / 255.0) - 40.0;
-        processed_value.round() as i8
+        processed_value as i8
     }
 
     fn calculate_inj_pw_high(raw: u8) -> f32 {
@@ -680,13 +680,13 @@ mod tests {
         let inputs: HashMap<u8, i8> = HashMap::from([
             (0, -40),
             (1, -39),
-            (32, -20),
+            (32, -19),
             (64, 0),
             (96, 20),
             (128, 40),
             (160, 60),
             (192, 80),
-            (224, 101),
+            (224, 100),
             (255, 120),
         ]);
         for (key, value) in inputs {
