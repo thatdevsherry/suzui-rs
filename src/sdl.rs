@@ -562,8 +562,8 @@ impl SuzukiSdlViewer {
     }
 
     fn calculate_temps(raw: u8) -> i8 {
-        let processed_value = (raw as f32 * 160.0 / 255.0) - 40.0;
-        processed_value as i8
+        let processed_value = (raw as f32 / 255.0) * 159.0 - 40.0;
+        processed_value.round() as i8
     }
 
     fn calculate_inj_pw_high(raw: u8) -> f32 {
@@ -680,14 +680,21 @@ mod tests {
         let inputs: HashMap<u8, i8> = HashMap::from([
             (0, -40),
             (1, -39),
-            (32, -19),
+            (2, -39),
+            (4, -38),
+            (8, -35),
+            (16, -30),
+            (32, -20),
             (64, 0),
             (96, 20),
             (128, 40),
             (160, 60),
+            (176, 70),
             (192, 80),
+            (208, 90),
             (224, 100),
-            (255, 120),
+            (240, 110),
+            (255, 119),
         ]);
         for (key, value) in inputs {
             assert_eq!(SuzukiSdlViewer::calculate_temps(key), value)
