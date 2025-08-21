@@ -1,13 +1,16 @@
-## [2.1.4] - 2025-08-19
+## [2.1.5] - 2025-08-21
 
 ### 🐛 Bug Fixes
 
 - Deviate from autel scanner for temps
+- Temp calculation
 
 ### ⚙️ Miscellaneous Tasks
 
 - Update changelog
 - Bump to v2.1.4
+- Update changelog
+- Bump to v2.1.5
 ## [2.1.3] - 2025-08-16
 
 ### 🐛 Bug Fixes
