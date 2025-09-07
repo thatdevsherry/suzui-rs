@@ -109,7 +109,7 @@ impl StatefulWidget for TemperatureBlock {
                 as u16
         };
         let coolant_color = match self.coolant {
-            temp if temp < 85 => Color::Blue,
+            temp if temp < 83 => Color::Blue,
             temp if temp < 101 => Color::Green,
             temp if temp < 110 => Color::LightYellow,
             _ => {
