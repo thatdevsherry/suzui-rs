@@ -17,7 +17,8 @@ pub struct ScanToolParameterValue {
 
 /// Flow rate for a single injector in (cc/min). Spec for inj. is about 38-48 (cc/15s) i.e 152-192
 /// (cc/min).
-const INJECTOR_FLOW_RATE: u8 = 152;
+/// UPDATE: The real-world reading was too high. 68% overestimation. Correction applied.
+const INJECTOR_FLOW_RATE: u8 = 90;
 
 /// Struct that contains all processed engine parameters with their representative values.
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
