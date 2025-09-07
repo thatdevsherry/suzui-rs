@@ -1,16 +1,34 @@
+## [2.1.6] - 2025-09-07
+
+### 🐛 Bug Fixes
+
+- Show coolant green from 83
+- Fuel flow rate reading
+
+### ⚙️ Miscellaneous Tasks
+
+- Update changelog
+- Bump to v2.1.6
 ## [2.1.5] - 2025-08-21
 
 ### 🐛 Bug Fixes
 
-- Deviate from autel scanner for temps
 - Temp calculation
 
 ### ⚙️ Miscellaneous Tasks
 
 - Update changelog
-- Bump to v2.1.4
-- Update changelog
 - Bump to v2.1.5
+## [2.1.4] - 2025-08-19
+
+### 🐛 Bug Fixes
+
+- Deviate from autel scanner for temps
+
+### ⚙️ Miscellaneous Tasks
+
+- Update changelog
+- Bump to v2.1.4
 ## [2.1.3] - 2025-08-16
 
 ### 🐛 Bug Fixes
