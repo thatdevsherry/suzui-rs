@@ -10,6 +10,7 @@ Built with rust and [ratatui](https://ratatui.rs/).
 
 ![Image](https://github.com/user-attachments/assets/00b2e278-38be-4710-a888-27c678bb7f0d)
 
+[Simulation](https://github.com/user-attachments/assets/fef1f3bb-058a-4434-9e07-ed09245b29a9)
 
 [first run of v0](https://youtu.be/1dXb9Y1NK0k)
 
