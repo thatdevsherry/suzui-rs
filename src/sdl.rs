@@ -18,7 +18,8 @@ pub struct ScanToolParameterValue {
 /// Flow rate for a single injector in (cc/min). Spec for inj. is about 38-48 (cc/15s) i.e 152-192
 /// (cc/min).
 /// UPDATE: The real-world reading was too high. 68% overestimation. Correction applied.
-const INJECTOR_FLOW_RATE: u8 = 90;
+/// UPDATE 2: Correction applied (90cc/min) gave ~4% overestimation. Applying further correction.
+const INJECTOR_FLOW_RATE: f64 = 87.8;
 
 /// Struct that contains all processed engine parameters with their representative values.
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
@@ -463,7 +464,7 @@ impl SuzukiSdlViewer {
                             let duty_cycle = (inj_pw as f64) / engine_cycle_time;
 
                             // calculate fuel flow rate
-                            let actual_flow_per_injector = INJECTOR_FLOW_RATE as f64 * duty_cycle;
+                            let actual_flow_per_injector = INJECTOR_FLOW_RATE * duty_cycle;
                             let total_fuel_flow = actual_flow_per_injector * 4.0;
                             let fuel_flow_rate_litres_per_hour = total_fuel_flow * 60.0 / 1000.0;
 
