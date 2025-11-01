@@ -1,3 +1,14 @@
+## [2.1.7] - 2025-11-01
+
+### 🐛 Bug Fixes
+
+- *(sdl.rs)* Injector flow rate
+
+### ⚙️ Miscellaneous Tasks
+
+- *(README)* Mark fuel data as stable and update image
+- *(README)* Add simulation video
+- Bump to v2.1.7
 ## [2.1.6] - 2025-09-07
 
 ### 🐛 Bug Fixes
@@ -9,6 +20,7 @@
 
 - Update changelog
 - Bump to v2.1.6
+- Changelog to v2.1.6
 ## [2.1.5] - 2025-08-21
 
 ### 🐛 Bug Fixes
