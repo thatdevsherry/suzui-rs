@@ -1,11 +1,3 @@
-# Archival note
-
-This project has been superseded by [dashuki](https://github.com/thatdevsherry/dashuki)
-
-It was a great experience working on this project. A good rust project for me. Sad to archive, but one must move on.
-
----
-
 # suzui-rs
 
 Oxidized version of my [original prototype](https://github.com/thatdevsherry/suzuki_sdl).
